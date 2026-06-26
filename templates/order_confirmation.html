@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Order Confirmed - Thank You</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0b0b0b;
+            color: #ffffff;
+            line-height: 1.6;
+        }
+
+        /* Header */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #0b0b0b;
+            padding: 18px 20px;
+            z-index: 999;
+            border-bottom: 1px solid #222222;
+            text-align: center;
+        }
+
+        .header-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #ffffff;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* Confirmation Container */
+        .confirmation-container {
+            margin-top: 80px;
+            padding: 20px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            padding-bottom: 40px;
+        }
+
+        /* Success Icon */
+        .confirmation-icon {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .success-checkmark {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .check-icon {
+            font-size: 48px;
+            color: #0b0b0b;
+            font-weight: 700;
+        }
+
+        .confirmation-title {
+            font-size: 22px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 10px;
+            letter-spacing: 0.5px;
+        }
+
+        .confirmation-subtitle {
+            font-size: 14px;
+            color: #a0a0a0;
+            text-align: center;
+            margin-bottom: 40px;
+            letter-spacing: 0.3px;
+        }
+
+        /* Confirmation Card */
+        .confirmation-card {
+            background: #161616;
+            border-radius: 4px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #222222;
+        }
+
+        .confirmation-card h2 {
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #ffffff;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .confirmation-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 12px 0;
+            border-bottom: 1px solid #222222;
+        }
+
+        .confirmation-row:last-child {
+            border-bottom: none;
+        }
+
+        .confirmation-label {
+            color: #a0a0a0;
+            font-size: 13px;
+            letter-spacing: 0.3px;
+        }
+
+        .confirmation-value {
+            color: #ffffff;
+            font-size: 13px;
+            text-align: right;
+            letter-spacing: 0.3px;
+        }
+
+        .confirmation-value strong {
+            font-weight: 600;
+        }
+
+        /* Status Badge */
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 2px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .status-badge.status-pending {
+            background: #ffffff;
+            color: #0b0b0b;
+        }
+
+        .status-badge.status-confirmed {
+            background: #22c55e;
+            color: #ffffff;
+        }
+
+        .status-badge.status-shipped {
+            background: #3b82f6;
+            color: #ffffff;
+        }
+
+        /* Product Display */
+        .confirmation-product {
+            display: flex;
+            gap: 15px;
+            padding: 15px 0;
+        }
+
+        .confirmation-product-image {
+            width: 80px;
+            height: 80px;
+            background: #0b0b0b;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            border: 1px solid #222222;
+        }
+
+        .confirmation-product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        .product-placeholder-small {
+            font-size: 32px;
+            opacity: 0.3;
+        }
+
+        .confirmation-product-details {
+            flex: 1;
+        }
+
+        .confirmation-product-details h3 {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #ffffff;
+            letter-spacing: 0.3px;
+        }
+
+        .confirmation-product-details p {
+            font-size: 12px;
+            color: #a0a0a0;
+            margin-bottom: 4px;
+            letter-spacing: 0.3px;
+        }
+
+        .confirmation-product-price {
+            font-size: 13px;
+            color: #ffffff;
+            margin-top: 8px;
+        }
+
+        .confirmation-product-price strong {
+            font-weight: 600;
+        }
+
+        .shipping-note {
+            font-size: 11px;
+            color: #666666;
+            margin-top: 4px;
+            letter-spacing: 0.3px;
+        }
+
+        /* Payment Info */
+        .payment-info {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .payment-icon {
+            font-size: 32px;
+        }
+
+        .payment-details h3 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+            text-transform: none;
+        }
+
+        .payment-details p {
+            font-size: 13px;
+            color: #a0a0a0;
+            letter-spacing: 0.3px;
+            line-height: 1.6;
+        }
+
+        /* Next Steps */
+        .next-steps {
+            background: #161616;
+        }
+
+        .steps-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .step-item {
+            display: flex;
+            gap: 15px;
+        }
+
+        .step-number {
+            width: 32px;
+            height: 32px;
+            background: #ffffff;
+            color: #0b0b0b;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .step-content h4 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: #ffffff;
+            letter-spacing: 0.3px;
+        }
+
+        .step-content p {
+            font-size: 13px;
+            color: #a0a0a0;
+            line-height: 1.6;
+            letter-spacing: 0.3px;
+        }
+
+        /* Important Note */
+        .confirmation-note {
+            background: #161616;
+            border: 1px solid #333333;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 25px;
+            font-size: 13px;
+            color: #a0a0a0;
+            letter-spacing: 0.3px;
+            line-height: 1.7;
+        }
+
+        .confirmation-note strong {
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        /* Action Buttons */
+        .confirmation-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 2px;
+            font-weight: 600;
+            font-size: 12px;
+            cursor: pointer;
+            text-decoration: none;
+            display: block;
+            text-align: center;
+            transition: all 0.2s ease;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .btn-primary {
+            background: #ffffff;
+            color: #0b0b0b;
+        }
+
+        .btn-primary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #ffffff;
+            border: 1px solid #333333;
+        }
+
+        .btn-secondary:hover {
+            border-color: #666666;
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        /* Print Styles */
+        @media print {
+            .header, .confirmation-actions {
+                display: none !important;
+            }
+            .confirmation-container {
+                margin-top: 0;
+                padding: 20px;
+            }
+            body {
+                background: #ffffff;
+                color: #000000;
+            }
+            .confirmation-card,
+            .confirmation-note {
+                border: 1px solid #cccccc;
+                background: #ffffff;
+            }
+        }
+
+        /* Responsive */
+        @media (min-width: 768px) {
+            .confirmation-actions {
+                flex-direction: row;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <h1 class="header-title">Order Confirmation</h1>
+    </header>
+
+    <!-- Confirmation Container -->
+    <div class="confirmation-container">
+        <div class="confirmation-icon">
+            <div class="success-checkmark">
+                <div class="check-icon">✓</div>
+            </div>
+        </div>
+
+        <h1 class="confirmation-title">Order Placed Successfully</h1>
+        <p class="confirmation-subtitle">Thank you for your order. We'll contact you soon on WhatsApp.</p>
+
+        <!-- Order Details -->
+        <div class="confirmation-card">
+            <h2>Order Details</h2>
+
+            <div class="confirmation-row">
+                <span class="confirmation-label">Order ID:</span>
+                <span class="confirmation-value"><strong>#{{ order.id }}</strong></span>
+            </div>
+
+            <div class="confirmation-row">
+                <span class="confirmation-label">Order Date:</span>
+                <span class="confirmation-value">{{ format_datetime(order.order_date) }}</span>
+            </div>
+
+            <div class="confirmation-row">
+                <span class="confirmation-label">Status:</span>
+                <span class="confirmation-value">
+                    <span class="status-badge status-{{ order.status }}">{{ order.status.title() }}</span>
+                </span>
+            </div>
+        </div>
+
+        <!-- Product Details -->
+        <div class="confirmation-card">
+            <h2>Product Information</h2>
+
+            <div class="confirmation-product">
+                <div class="confirmation-product-image">
+                    <div class="product-placeholder-small">👟</div>
+                </div>
+                <div class="confirmation-product-details">
+                    <h3>{{ order.product_name }}</h3>
+                    <p>Brand: {{ order.brand or 'N/A' }}</p>
+                    <p>Size: {{ order.size }}</p>
+                    <p>Condition: {{ order.condition or 'Good' }}</p>
+                    <p class="confirmation-product-price">Price: <strong>Rs {{ order.price|int }}</strong></p>
+                    <p class="shipping-note">+ Shipping charges</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Delivery Details -->
+        <div class="confirmation-card">
+            <h2>Delivery Information</h2>
+
+            <div class="confirmation-row">
+                <span class="confirmation-label">Name:</span>
+                <span class="confirmation-value">{{ order.customer_name }}</span>
+            </div>
+
+            <div class="confirmation-row">
+                <span class="confirmation-label">WhatsApp:</span>
+                <span class="confirmation-value">{{ order.whatsapp }}</span>
+            </div>
+
+            <div class="confirmation-row">
+                <span class="confirmation-label">City:</span>
+                <span class="confirmation-value">{{ order.city }}</span>
+            </div>
+
+            <div class="confirmation-row">
+                <span class="confirmation-label">Address:</span>
+                <span class="confirmation-value">{{ order.address }}</span>
+            </div>
+
+            {% if order.notes %}
+            <div class="confirmation-row">
+                <span class="confirmation-label">Notes:</span>
+                <span class="confirmation-value">{{ order.notes }}</span>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Payment Method -->
+        <div class="confirmation-card payment-info">
+            <div class="payment-icon">💳</div>
+            <div class="payment-details">
+                <h3>Cash on Delivery (COD)</h3>
+                <p>You will pay <strong>Rs {{ order.price|int }}</strong> plus applicable shipping charges when you receive the product.</p>
+            </div>
+        </div>
+
+        <!-- Next Steps -->
+        <div class="confirmation-card next-steps">
+            <h2>What Happens Next?</h2>
+            <div class="steps-list">
+                <div class="step-item">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h4>Order Confirmation</h4>
+                        <p>We'll send you a confirmation message on WhatsApp within a few hours with the total amount including shipping.</p>
+                    </div>
+                </div>
+                <div class="step-item">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h4>Order Preparation</h4>
+                        <p>Your order will be carefully prepared and packed for delivery.</p>
+                    </div>
+                </div>
+                <div class="step-item">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h4>Delivery</h4>
+                        <p>We'll deliver to your address. Pay the total amount (product price + shipping) in cash when you receive the product.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Important Note -->
+        <div class="confirmation-note">
+            <strong>📱 Important:</strong> Please keep your WhatsApp active. We'll contact you on <strong>{{ order.whatsapp }}</strong> for order confirmation, final pricing details, and delivery updates.
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="confirmation-actions">
+            <a href="/" class="btn btn-primary">
+                Continue Shopping
+            </a>
+            <button onclick="window.print()" class="btn btn-secondary">
+                Print Order Details
+            </button>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python *)",
+      "Bash(curl -s http://127.0.0.1:5000)",
+      "Bash(curl -s \"http://127.0.0.1:5000/?size=43\")",
+      "Bash(curl -s \"http://127.0.0.1:5000/product/1\")",
+      "Bash(curl -s \"http://127.0.0.1:5000/checkout/1\")",
+      "Bash(curl -s \"http://127.0.0.1:5000/admin/login\")",
+      "Bash(curl -s \"http://127.0.0.1:5000/admin/dashboard\" -I)",
+      "Bash(sqlite3 shoes.db \"ALTER TABLE products ADD COLUMN imported_premium INTEGER DEFAULT 0;\")",
+      "Bash(sqlite3 shoes.db \"SELECT id, title, is_sale, sale_end_time FROM products LIMIT 5;\")",
+      "Bash(curl -s http://127.0.0.1:5000/)",
+      "Bash(grep -E \"\\\\.html$\")",
+      "Bash(grep -E \"\\\\.\\(txt|md|log|tmp|bak\\)$|^test|^old_\")"
+    ]
+  }
+}

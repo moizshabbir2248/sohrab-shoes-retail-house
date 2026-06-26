@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - ShoesHub</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            line-height: 1.6;
+        }
+
+        /* Header */
+        .admin-header {
+            background: #111;
+            border-bottom: 2px solid #222;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 800;
+            color: #fff;
+        }
+
+        .logo span {
+            color: #ff4500;
+        }
+
+        .admin-badge {
+            background: #ff4500;
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .welcome-text {
+            color: #888;
+            font-size: 14px;
+        }
+
+        .logout-btn {
+            padding: 10px 20px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            color: #fff;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: #ff4500;
+            border-color: #ff4500;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        .page-title {
+            font-size: 32px;
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+
+        .page-description {
+            color: #888;
+            font-size: 16px;
+            margin-bottom: 30px;
+        }
+
+        /* Flash Messages */
+        .flash-messages {
+            margin-bottom: 25px;
+        }
+
+        .flash-message {
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .flash-message.error {
+            background: rgba(220, 38, 38, 0.2);
+            border: 1px solid #dc2626;
+            color: #fca5a5;
+        }
+
+        .flash-message.success {
+            background: rgba(34, 197, 94, 0.2);
+            border: 1px solid #22c55e;
+            color: #86efac;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 12px;
+            padding: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            border-color: #ff4500;
+            transform: translateY(-2px);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .stat-icon {
+            font-size: 32px;
+        }
+
+        .stat-label {
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: 800;
+            color: #ff4500;
+        }
+
+        /* Action Buttons */
+        .actions-section {
+            margin-bottom: 40px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+        }
+
+        .action-btn {
+            display: block;
+            background: linear-gradient(135deg, #ff4500, #ff6b35);
+            color: #fff;
+            padding: 20px 25px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 16px;
+            text-align: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 69, 0, 0.3);
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 69, 0, 0.4);
+        }
+
+        .action-btn.secondary {
+            background: #1a1a1a;
+            border: 2px solid #333;
+            box-shadow: none;
+        }
+
+        .action-btn.secondary:hover {
+            border-color: #ff4500;
+        }
+
+        /* Recent Orders */
+        .recent-orders {
+            margin-bottom: 40px;
+        }
+
+        .orders-table-wrapper {
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .orders-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .orders-table thead {
+            background: #1a1a1a;
+        }
+
+        .orders-table th {
+            padding: 15px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 700;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .orders-table td {
+            padding: 15px;
+            border-top: 1px solid #222;
+            font-size: 14px;
+        }
+
+        .orders-table tr:hover {
+            background: #1a1a1a;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .status-badge.pending {
+            background: rgba(255, 165, 0, 0.2);
+            color: #ffa500;
+            border: 1px solid #ffa500;
+        }
+
+        .status-badge.confirmed {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+            border: 1px solid #22c55e;
+        }
+
+        .empty-state {
+            padding: 40px;
+            text-align: center;
+            color: #666;
+        }
+
+        /* Low Stock Alert */
+        .low-stock-section {
+            margin-bottom: 40px;
+        }
+
+        .alert-box {
+            background: rgba(255, 69, 0, 0.1);
+            border: 2px solid #ff4500;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .alert-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .alert-icon {
+            font-size: 24px;
+        }
+
+        .alert-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #ff4500;
+        }
+
+        .low-stock-list {
+            list-style: none;
+        }
+
+        .low-stock-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid #222;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .low-stock-list li:last-child {
+            border-bottom: none;
+        }
+
+        @media (max-width: 768px) {
+            .admin-header {
+                padding: 15px 20px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .orders-table-wrapper {
+                overflow-x: auto;
+            }
+
+            .orders-table {
+                min-width: 600px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Admin Header -->
+    <header class="admin-header">
+        <div class="header-left">
+            <div class="logo">SHOES<span>HUB</span></div>
+            <span class="admin-badge">ADMIN</span>
+        </div>
+        <div class="header-right">
+            <span class="welcome-text">Welcome, {{ session.get('admin_username', 'Admin') }}</span>
+            <a href="/admin/logout" class="logout-btn">Logout</a>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container">
+        <h1 class="page-title">📊 Dashboard</h1>
+        <p class="page-description">Overview of your shoe business</p>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                <div class="flash-message {{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Statistics Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon">📦</div>
+                </div>
+                <div class="stat-label">Total Products</div>
+                <div class="stat-value">{{ total_products }}</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon">🛒</div>
+                </div>
+                <div class="stat-label">Total Orders</div>
+                <div class="stat-value">{{ total_orders }}</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon">⏳</div>
+                </div>
+                <div class="stat-label">Pending Orders</div>
+                <div class="stat-value">{{ pending_orders }}</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon">✅</div>
+                </div>
+                <div class="stat-label">In Stock</div>
+                <div class="stat-value">{{ in_stock_products }}</div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="actions-section">
+            <h2 class="section-title">Quick Actions</h2>
+            <div class="action-grid">
+                <a href="/admin/add_product" class="action-btn">
+                    ➕ Add New Product
+                </a>
+                <a href="/admin/orders" class="action-btn secondary">
+                    📋 View All Orders
+                </a>
+                <a href="/" class="action-btn secondary" target="_blank">
+                    🏪 View Store
+                </a>
+            </div>
+        </div>
+
+        <!-- Low Stock Alert -->
+        {% if low_stock %}
+        <div class="low-stock-section">
+            <div class="alert-box">
+                <div class="alert-header">
+                    <span class="alert-icon">⚠️</span>
+                    <h2 class="alert-title">Low Stock Alert</h2>
+                </div>
+                <ul class="low-stock-list">
+                    {% for product in low_stock %}
+                    <li>
+                        <span>{{ product.name }} (Size {{ product.size }})</span>
+                        <span class="status-badge pending">{{ product.stock }} left</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Recent Orders -->
+        <div class="recent-orders">
+            <h2 class="section-title">Recent Orders (Last 5)</h2>
+            <div class="orders-table-wrapper">
+                {% if recent_orders %}
+                <table class="orders-table">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Customer</th>
+                            <th>WhatsApp</th>
+                            <th>Product</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in recent_orders %}
+                        <tr>
+                            <td>#{{ order.id }}</td>
+                            <td>{{ order.customer_name }}</td>
+                            <td>{{ order.whatsapp }}</td>
+                            <td>{{ order.product.name if order.product else 'N/A' }}</td>
+                            <td>
+                                <span class="status-badge {{ order.status }}">
+                                    {{ order.status.upper() }}
+                                </span>
+                            </td>
+                            <td>{{ order.order_date.strftime('%d %b, %Y') }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-state">
+                    <p>No orders yet</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>

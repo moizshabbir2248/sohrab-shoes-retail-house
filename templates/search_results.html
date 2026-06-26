@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Search Results - {{ query }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Search Header -->
+    <div class="search-header">
+        <h1>Search Results</h1>
+        <p class="search-query">Showing results for: <strong>"{{ query }}"</strong></p>
+    </div>
+
+    <!-- Search Results -->
+    <section class="section">
+        {% if products %}
+            <p class="results-count">Found {{ products|length }} product(s)</p>
+
+            <div class="products-grid">
+                {% for product in products %}
+                <div class="product-card">
+                    <a href="{{ url_for('product_detail', product_id=product.id) }}" class="product-link">
+                        <div class="product-image">
+                            {% if product.image_url %}
+                                <img src="{{ product.image_url }}" alt="{{ product.name }}" loading="lazy">
+                            {% else %}
+                                <div class="product-placeholder">👟</div>
+                            {% endif %}
+                            {% if product.stock < 1 %}
+                                <span class="stock-badge out-of-stock">Sold Out</span>
+                            {% elif product.stock == 1 %}
+                                <span class="stock-badge last-piece">Last Piece</span>
+                            {% endif %}
+                        </div>
+                        <div class="product-info">
+                            <h3 class="product-name">{{ product.name }}</h3>
+                            <p class="product-brand">{{ product.brand }}</p>
+                            <div class="product-meta">
+                                <span class="product-size">Size: {{ product.size }}</span>
+                                <span class="product-condition condition-{{ product.condition.lower().replace(' ', '-') }}">
+                                    {{ product.condition }}
+                                </span>
+                            </div>
+                            <div class="product-pricing">
+                                <span class="product-price">Rs. {{ product.price }}</span>
+                                {% if product.original_price and product.original_price > product.price %}
+                                    <span class="product-original-price">Rs. {{ product.original_price }}</span>
+                                    <span class="product-discount">
+                                        -{{ ((product.original_price - product.price) / product.original_price * 100)|int }}%
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">🔍</div>
+                <h2>No products found</h2>
+                <p>We couldn't find any products matching "<strong>{{ query }}</strong>"</p>
+                <div class="empty-suggestions">
+                    <h3>Suggestions:</h3>
+                    <ul>
+                        <li>Check your spelling</li>
+                        <li>Try different keywords</li>
+                        <li>Use more general search terms</li>
+                        <li>Try searching by brand name</li>
+                    </ul>
+                </div>
+                <a href="{{ url_for('home') }}" class="btn btn-primary">Browse All Products</a>
+            </div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

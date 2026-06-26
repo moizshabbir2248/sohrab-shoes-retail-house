@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }} - Imported Shoes Shop{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+        <a href="{{ url_for('home') }}">Home</a>
+        <span>/</span>
+        {% if product.category %}
+            <a href="{{ url_for('home') }}?category={{ product.category }}">{{ product.category }}</a>
+            <span>/</span>
+        {% endif %}
+        <span>{{ product.name }}</span>
+    </div>
+
+    <!-- Product Detail -->
+    <section class="product-detail">
+        <div class="product-detail-image">
+            {% if product.image_url %}
+                <img src="{{ product.image_url }}" alt="{{ product.name }}">
+            {% else %}
+                <div class="product-placeholder-large">👟</div>
+            {% endif %}
+
+            {% if product.stock < 1 %}
+                <span class="stock-badge-large out-of-stock">Sold Out</span>
+            {% elif product.stock == 1 %}
+                <span class="stock-badge-large last-piece">⚠️ Last Piece!</span>
+            {% endif %}
+        </div>
+
+        <div class="product-detail-info">
+            <h1 class="product-detail-title">{{ product.name }}</h1>
+
+            {% if product.brand %}
+                <p class="product-detail-brand">Brand: <strong>{{ product.brand }}</strong></p>
+            {% endif %}
+
+            <!-- Pricing -->
+            <div class="product-detail-pricing">
+                <span class="product-detail-price">Rs. {{ product.price }}</span>
+                {% if product.original_price and product.original_price > product.price %}
+                    <span class="product-detail-original-price">Rs. {{ product.original_price }}</span>
+                    <span class="product-detail-discount">
+                        Save {{ ((product.original_price - product.price) / product.original_price * 100)|int }}%
+                    </span>
+                {% endif %}
+            </div>
+
+            <!-- Product Details -->
+            <div class="product-detail-specs">
+                <div class="spec-item">
+                    <span class="spec-label">Size:</span>
+                    <span class="spec-value">{{ product.size }}</span>
+                </div>
+                <div class="spec-item">
+                    <span class="spec-label">Condition:</span>
+                    <span class="spec-value condition-badge condition-{{ product.condition.lower().replace(' ', '-') }}">
+                        {{ product.condition }}
+                    </span>
+                </div>
+                {% if product.color %}
+                <div class="spec-item">
+                    <span class="spec-label">Color:</span>
+                    <span class="spec-value">{{ product.color }}</span>
+                </div>
+                {% endif %}
+                {% if product.category %}
+                <div class="spec-item">
+                    <span class="spec-label">Category:</span>
+                    <span class="spec-value">{{ product.category }}</span>
+                </div>
+                {% endif %}
+                <div class="spec-item">
+                    <span class="spec-label">Stock:</span>
+                    <span class="spec-value">
+                        {% if product.stock < 1 %}
+                            <span class="text-danger">Out of Stock</span>
+                        {% elif product.stock == 1 %}
+                            <span class="text-warning">1 piece left</span>
+                        {% else %}
+                            {{ product.stock }} available
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Description -->
+            {% if product.description %}
+            <div class="product-detail-description">
+                <h3>Description</h3>
+                <p>{{ product.description }}</p>
+            </div>
+            {% endif %}
+
+            <!-- Features -->
+            <div class="product-detail-features">
+                <div class="feature-item">
+                    <span class="feature-icon">✓</span>
+                    <span>Cash on Delivery</span>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">✓</span>
+                    <span>Imported Quality</span>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">✓</span>
+                    <span>WhatsApp Support</span>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="product-detail-actions">
+                {% if product.stock > 0 %}
+                    <a href="{{ url_for('checkout', product_id=product.id) }}" class="btn btn-primary btn-large">
+                        Order Now (COD)
+                    </a>
+                {% else %}
+                    <button class="btn btn-disabled btn-large" disabled>
+                        Out of Stock
+                    </button>
+                {% endif %}
+                <a href="{{ url_for('home') }}" class="btn btn-secondary btn-large">
+                    Continue Shopping
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Related Products -->
+    {% if related_products %}
+    <section class="section">
+        <h2 class="section-title">You May Also Like</h2>
+        <div class="products-grid">
+            {% for related in related_products %}
+            <div class="product-card">
+                <a href="{{ url_for('product_detail', product_id=related.id) }}" class="product-link">
+                    <div class="product-image">
+                        {% if related.image_url %}
+                            <img src="{{ related.image_url }}" alt="{{ related.name }}" loading="lazy">
+                        {% else %}
+                            <div class="product-placeholder">👟</div>
+                        {% endif %}
+                        {% if related.stock < 1 %}
+                            <span class="stock-badge out-of-stock">Sold Out</span>
+                        {% elif related.stock == 1 %}
+                            <span class="stock-badge last-piece">Last Piece</span>
+                        {% endif %}
+                    </div>
+                    <div class="product-info">
+                        <h3 class="product-name">{{ related.name }}</h3>
+                        <p class="product-brand">{{ related.brand }}</p>
+                        <div class="product-meta">
+                            <span class="product-size">Size: {{ related.size }}</span>
+                            <span class="product-condition condition-{{ related.condition.lower().replace(' ', '-') }}">
+                                {{ related.condition }}
+                            </span>
+                        </div>
+                        <div class="product-pricing">
+                            <span class="product-price">Rs. {{ related.price }}</span>
+                            {% if related.original_price and related.original_price > related.price %}
+                                <span class="product-original-price">Rs. {{ related.original_price }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+</div>
+{% endblock %}

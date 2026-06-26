@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orders Dashboard - Admin</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0b0b0b;
+            color: #ffffff;
+            padding: 20px;
+        }
+
+        .header {
+            max-width: 1400px;
+            margin: 0 auto 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #222222;
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #a0a0a0;
+            font-size: 14px;
+            letter-spacing: 0.3px;
+        }
+
+        .stats {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            max-width: 1400px;
+            margin: 0 auto 30px;
+        }
+
+        .stat-box {
+            background: #161616;
+            border: 1px solid #222222;
+            border-radius: 4px;
+            padding: 15px 20px;
+            flex: 1;
+        }
+
+        .stat-label {
+            color: #a0a0a0;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .table-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: #161616;
+            border: 1px solid #222222;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #0b0b0b;
+            color: #ffffff;
+            text-align: left;
+            padding: 15px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+            border-bottom: 1px solid #222222;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #222222;
+            color: #a0a0a0;
+            font-size: 13px;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover {
+            background: #1a1a1a;
+        }
+
+        .order-id {
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666666;
+        }
+
+        .back-btn {
+            display: inline-block;
+            background: #ffffff;
+            color: #0b0b0b;
+            padding: 10px 20px;
+            border-radius: 2px;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+        }
+
+        .back-btn:hover {
+            background: #e0e0e0;
+        }
+
+        @media (max-width: 768px) {
+            .stats {
+                flex-direction: column;
+            }
+
+            table {
+                font-size: 12px;
+            }
+
+            th, td {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="/" class="back-btn">← Back to Store</a>
+        <h1>📋 Orders Dashboard</h1>
+        <p class="subtitle">All customer orders and delivery information</p>
+    </div>
+
+    <div class="stats">
+        <div class="stat-box">
+            <div class="stat-label">Total Orders</div>
+            <div class="stat-value">{{ orders|length }}</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">Pending</div>
+            <div class="stat-value">{{ orders|selectattr('status', 'equalto', 'pending')|list|length }}</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">Confirmed</div>
+            <div class="stat-value">{{ orders|selectattr('status', 'equalto', 'confirmed')|list|length }}</div>
+        </div>
+    </div>
+
+    <div class="table-container">
+        {% if orders %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Customer Name</th>
+                    <th>WhatsApp</th>
+                    <th>Address</th>
+                    <th>City</th>
+                    <th>Shoe Ordered</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr>
+                    <td class="order-id">#{{ order.id }}</td>
+                    <td>{{ order.customer_name }}</td>
+                    <td>{{ order.whatsapp }}</td>
+                    <td>{{ order.address[:50] }}...</td>
+                    <td>{{ order.city }}</td>
+                    <td>{{ order.product_title or 'N/A' }}</td>
+                    <td>{{ order.status }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <p>📭 No orders yet</p>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>

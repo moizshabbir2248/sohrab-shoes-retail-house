@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Orders - ShoesHub</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            line-height: 1.6;
+        }
+
+        /* Header */
+        .admin-header {
+            background: #111;
+            border-bottom: 2px solid #222;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 800;
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .logo span {
+            color: #ff4500;
+        }
+
+        .admin-badge {
+            background: #ff4500;
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .nav-btn {
+            padding: 10px 20px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            color: #fff;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            background: #ff4500;
+            border-color: #ff4500;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        .page-title {
+            font-size: 32px;
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+
+        .page-description {
+            color: #888;
+            font-size: 16px;
+            margin-bottom: 30px;
+        }
+
+        /* Flash Messages */
+        .flash-messages {
+            margin-bottom: 25px;
+        }
+
+        .flash-message {
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .flash-message.error {
+            background: rgba(220, 38, 38, 0.2);
+            border: 1px solid #dc2626;
+            color: #fca5a5;
+        }
+
+        .flash-message.success {
+            background: rgba(34, 197, 94, 0.2);
+            border: 1px solid #22c55e;
+            color: #86efac;
+        }
+
+        /* Orders Table */
+        .orders-table-wrapper {
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .orders-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .orders-table thead {
+            background: #1a1a1a;
+        }
+
+        .orders-table th {
+            padding: 15px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 700;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .orders-table td {
+            padding: 15px;
+            border-top: 1px solid #222;
+            font-size: 14px;
+            vertical-align: top;
+        }
+
+        .orders-table tr:hover {
+            background: #1a1a1a;
+        }
+
+        .order-id {
+            color: #ff4500;
+            font-weight: 700;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .status-badge.pending {
+            background: rgba(255, 165, 0, 0.2);
+            color: #ffa500;
+            border: 1px solid #ffa500;
+        }
+
+        .status-badge.confirmed {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+            border: 1px solid #22c55e;
+        }
+
+        .status-badge.delivered {
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+            border: 1px solid #3b82f6;
+        }
+
+        .status-badge.cancelled {
+            background: rgba(220, 38, 38, 0.2);
+            color: #dc2626;
+            border: 1px solid #dc2626;
+        }
+
+        .status-form {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-top: 8px;
+        }
+
+        .status-select {
+            padding: 6px 10px;
+            background: #0a0a0a;
+            border: 1px solid #333;
+            border-radius: 6px;
+            color: #fff;
+            font-size: 12px;
+        }
+
+        .update-btn {
+            padding: 6px 12px;
+            background: #ff4500;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .update-btn:hover {
+            background: #ff6b35;
+        }
+
+        .empty-state {
+            padding: 60px 20px;
+            text-align: center;
+            color: #666;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .product-info {
+            font-size: 13px;
+            color: #888;
+            margin-top: 4px;
+        }
+
+        .address-block {
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 768px) {
+            .admin-header {
+                padding: 15px 20px;
+            }
+
+            .orders-table-wrapper {
+                overflow-x: auto;
+            }
+
+            .orders-table {
+                min-width: 1000px;
+            }
+
+            .page-title {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Admin Header -->
+    <header class="admin-header">
+        <div class="header-left">
+            <a href="/admin/dashboard" class="logo">SHOES<span>HUB</span></a>
+            <span class="admin-badge">ADMIN</span>
+        </div>
+        <div class="header-right">
+            <a href="/admin/dashboard" class="nav-btn">Dashboard</a>
+            <a href="/admin/add_product" class="nav-btn">Add Product</a>
+            <a href="/admin/logout" class="nav-btn">Logout</a>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container">
+        <h1 class="page-title">📋 All Orders</h1>
+        <p class="page-description">Manage and track all customer orders</p>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                <div class="flash-message {{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Orders Table -->
+        <div class="orders-table-wrapper">
+            {% if orders %}
+            <table class="orders-table">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Customer Name</th>
+                        <th>WhatsApp</th>
+                        <th>Product</th>
+                        <th>Address</th>
+                        <th>City</th>
+                        <th>Status</th>
+                        <th>Order Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr>
+                        <td><span class="order-id">#{{ order.id }}</span></td>
+                        <td>{{ order.customer_name }}</td>
+                        <td>{{ order.whatsapp }}</td>
+                        <td>
+                            <strong>{{ order.product.name if order.product else 'Product N/A' }}</strong>
+                            {% if order.product %}
+                            <div class="product-info">
+                                Size {{ order.product.size }} • Rs {{ order.product.price|int }}
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="address-block">
+                                {{ order.address }}
+                                {% if order.notes %}
+                                <div style="margin-top: 6px; color: #666;">
+                                    <em>Note: {{ order.notes }}</em>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>{{ order.city }}</td>
+                        <td>
+                            <span class="status-badge {{ order.status }}">
+                                {{ order.status.upper() }}
+                            </span>
+                            <form method="POST" action="/admin/update_order_status/{{ order.id }}" class="status-form">
+                                <select name="status" class="status-select">
+                                    <option value="pending" {% if order.status == 'pending' %}selected{% endif %}>Pending</option>
+                                    <option value="confirmed" {% if order.status == 'confirmed' %}selected{% endif %}>Confirmed</option>
+                                    <option value="delivered" {% if order.status == 'delivered' %}selected{% endif %}>Delivered</option>
+                                    <option value="cancelled" {% if order.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                                </select>
+                                <button type="submit" class="update-btn">Update</button>
+                            </form>
+                        </td>
+                        <td>{{ order.order_date.strftime('%d %b, %Y') }}<br>{{ order.order_date.strftime('%I:%M %p') }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon">📭</div>
+                <h2>No Orders Yet</h2>
+                <p>Orders will appear here when customers place them</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>
+                    <div class="stat-label">Pending</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{{ orders|selectattr('status', 'equalto', 'confirmed')|list|length }}</div>
+                    <div class="stat-label">Confirmed</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{{ orders|selectattr('status', 'equalto', 'delivered')|list|length }}</div>
+                    <div class="stat-label">Delivered</div>
+                </div>
+            </div>
+
+            <div class="orders-table-container">
+                <table class="orders-table">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Customer</th>
+                            <th>Product</th>
+                            <th>Price</th>
+                            <th>WhatsApp</th>
+                            <th>City</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders %}
+                        <tr class="order-row" onclick="toggleOrderDetails({{ order.id }})">
+                            <td><strong>#{{ order.id }}</strong></td>
+                            <td>{{ order.customer_name }}</td>
+                            <td>{{ order.product.name }}</td>
+                            <td><strong>Rs. {{ order.product.price }}</strong></td>
+                            <td>
+                                <a href="https://wa.me/92{{ order.whatsapp.replace('-', '').lstrip('0') }}"
+                                   target="_blank"
+                                   class="whatsapp-link"
+                                   onclick="event.stopPropagation()">
+                                    {{ order.whatsapp }}
+                                </a>
+                            </td>
+                            <td>{{ order.city }}</td>
+                            <td>
+                                <span class="status-badge status-{{ order.status }}">
+                                    {{ order.status.title() }}
+                                </span>
+                            </td>
+                            <td>{{ order.order_date.strftime('%b %d, %Y') }}</td>
+                        </tr>
+                        <tr class="order-details" id="details-{{ order.id }}" style="display: none;">
+                            <td colspan="8">
+                                <div class="order-details-content">
+                                    <div class="detail-section">
+                                        <h4>📍 Delivery Address</h4>
+                                        <p>{{ order.address }}</p>
+                                    </div>
+                                    {% if order.notes %}
+                                    <div class="detail-section">
+                                        <h4>📝 Order Notes</h4>
+                                        <p>{{ order.notes }}</p>
+                                    </div>
+                                    {% endif %}
+                                    <div class="detail-section">
+                                        <h4>👟 Product Details</h4>
+                                        <p>
+                                            <strong>Brand:</strong> {{ order.product.brand }}<br>
+                                            <strong>Size:</strong> {{ order.product.size }}<br>
+                                            <strong>Condition:</strong> {{ order.product.condition }}<br>
+                                            <strong>Color:</strong> {{ order.product.color }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Mobile View -->
+            <div class="orders-mobile">
+                {% for order in orders %}
+                <div class="order-card-mobile">
+                    <div class="order-card-header">
+                        <span class="order-id"><strong>#{{ order.id }}</strong></span>
+                        <span class="status-badge status-{{ order.status }}">{{ order.status.title() }}</span>
+                    </div>
+                    <div class="order-card-body">
+                        <div class="order-info-row">
+                            <span class="info-label">Customer:</span>
+                            <span class="info-value">{{ order.customer_name }}</span>
+                        </div>
+                        <div class="order-info-row">
+                            <span class="info-label">Product:</span>
+                            <span class="info-value">{{ order.product.name }}</span>
+                        </div>
+                        <div class="order-info-row">
+                            <span class="info-label">Price:</span>
+                            <span class="info-value"><strong>Rs. {{ order.product.price }}</strong></span>
+                        </div>
+                        <div class="order-info-row">
+                            <span class="info-label">WhatsApp:</span>
+                            <span class="info-value">
+                                <a href="https://wa.me/92{{ order.whatsapp.replace('-', '').lstrip('0') }}"
+                                   target="_blank"
+                                   class="whatsapp-link">
+                                    {{ order.whatsapp }}
+                                </a>
+                            </span>
+                        </div>
+                        <div class="order-info-row">
+                            <span class="info-label">City:</span>
+                            <span class="info-value">{{ order.city }}</span>
+                        </div>
+                        <div class="order-info-row">
+                            <span class="info-label">Address:</span>
+                            <span class="info-value">{{ order.address }}</span>
+                        </div>
+                        {% if order.notes %}
+                        <div class="order-info-row">
+                            <span class="info-label">Notes:</span>
+                            <span class="info-value">{{ order.notes }}</span>
+                        </div>
+                        {% endif %}
+                        <div class="order-info-row">
+                            <span class="info-label">Date:</span>
+                            <span class="info-value">{{ order.order_date.strftime('%B %d, %Y at %I:%M %p') }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">📦</div>
+                <h2>No Orders Yet</h2>
+                <p>Orders will appear here once customers start placing orders.</p>
+                <a href="{{ url_for('home') }}" class="btn btn-primary">View Products</a>
+            </div>
+        {% endif %}
+    </section>
+</div>
+
+<script>
+function toggleOrderDetails(orderId) {
+    const detailsRow = document.getElementById('details-' + orderId);
+    if (detailsRow.style.display === 'none') {
+        detailsRow.style.display = 'table-row';
+    } else {
+        detailsRow.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}

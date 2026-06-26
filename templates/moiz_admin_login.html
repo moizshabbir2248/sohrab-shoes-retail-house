@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - Moiz Shoe Store</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #0b0b0b;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .login-card {
+            background: #161616;
+            border: 1px solid #222222;
+            border-radius: 4px;
+            padding: 40px 30px;
+            max-width: 400px;
+            width: 100%;
+        }
+        h1 { font-size: 24px; font-weight: 600; letter-spacing: 1px; margin-bottom: 10px; text-transform: uppercase; text-align: center; }
+        .subtitle { color: #a0a0a0; font-size: 13px; letter-spacing: 0.5px; text-align: center; margin-bottom: 30px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; color: #a0a0a0; font-size: 12px; font-weight: 500; margin-bottom: 8px; letter-spacing: 0.5px; text-transform: uppercase; }
+        input { width: 100%; padding: 14px; background: #0b0b0b; border: 1px solid #333333; border-radius: 2px; color: #ffffff; font-size: 14px; }
+        input:focus { outline: none; border-color: #666666; }
+        input::placeholder { color: #555555; }
+        .login-btn { width: 100%; padding: 16px; background: #ffffff; color: #0b0b0b; border: none; border-radius: 2px; font-weight: 600; font-size: 12px; cursor: pointer; letter-spacing: 1.5px; text-transform: uppercase; }
+        .login-btn:hover { background: #e0e0e0; }
+        .error-message { background: rgba(255, 51, 51, 0.15); border: 1px solid #ff3333; border-radius: 4px; padding: 12px; margin-bottom: 20px; color: #ff6666; font-size: 13px; text-align: center; }
+        .back-link { text-align: center; margin-top: 20px; }
+        .back-link a { color: #a0a0a0; text-decoration: none; font-size: 12px; }
+        .back-link a:hover { color: #ffffff; }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <h1>🔐 Admin Login</h1>
+        <p class="subtitle">Moiz Shoe Store Dashboard</p>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="error-message">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        <form method="POST">
+            <div class="form-group">
+                <label for="email">Admin Email</label>
+                <input type="email" id="email" name="email" placeholder="admin@example.com" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="Enter password" required>
+            </div>
+            <button type="submit" class="login-btn">Login to Dashboard</button>
+        </form>
+        <div class="back-link"><a href="/">← Back to Store</a></div>
+    </div>
+</body>
+</html>

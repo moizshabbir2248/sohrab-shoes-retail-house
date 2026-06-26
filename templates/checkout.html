@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Checkout - Cash on Delivery</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0b0b0b;
+            color: #ffffff;
+            line-height: 1.6;
+        }
+
+        /* Header */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #0b0b0b;
+            padding: 18px 20px;
+            z-index: 999;
+            border-bottom: 1px solid #222222;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .back-btn {
+            color: #ffffff;
+            font-size: 20px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            transition: opacity 0.2s ease;
+        }
+
+        .back-btn:hover {
+            opacity: 0.7;
+        }
+
+        .header-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #ffffff;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* Checkout Container */
+        .checkout-container {
+            margin-top: 70px;
+            padding: 20px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            padding-bottom: 120px;
+        }
+
+        /* Product Summary */
+        .product-summary {
+            background: #161616;
+            border-radius: 4px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #222222;
+        }
+
+        .summary-title {
+            font-size: 10px;
+            color: #a0a0a0;
+            margin-bottom: 15px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .summary-content {
+            display: flex;
+            gap: 15px;
+        }
+
+        .summary-image {
+            width: 80px;
+            height: 80px;
+            background: #0b0b0b;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            flex-shrink: 0;
+            border: 1px solid #222222;
+        }
+
+        .summary-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        .summary-details {
+            flex: 1;
+        }
+
+        .summary-product-name {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #ffffff;
+            letter-spacing: 0.3px;
+        }
+
+        .summary-meta {
+            color: #a0a0a0;
+            font-size: 12px;
+            margin-bottom: 10px;
+            letter-spacing: 0.3px;
+        }
+
+        .summary-price {
+            color: #ffffff;
+            font-size: 20px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .summary-note {
+            font-size: 11px;
+            color: #666666;
+            margin-top: 5px;
+            letter-spacing: 0.3px;
+        }
+
+        /* Form Section */
+        .form-section {
+            background: #161616;
+            border-radius: 4px;
+            padding: 25px 20px;
+            margin-bottom: 20px;
+            border: 1px solid #222222;
+        }
+
+        .section-header {
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .section-icon {
+            font-size: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            color: #a0a0a0;
+            font-size: 12px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .form-label .required {
+            color: #ff3333;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px;
+            background: #0b0b0b;
+            border: 1px solid #333333;
+            border-radius: 2px;
+            color: #ffffff;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            letter-spacing: 0.3px;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #666666;
+            background: #0b0b0b;
+        }
+
+        .form-input::placeholder {
+            color: #555555;
+        }
+
+        textarea.form-input {
+            min-height: 100px;
+            resize: vertical;
+            font-family: inherit;
+        }
+
+        /* Flash Messages */
+        .flash-messages {
+            margin-bottom: 20px;
+        }
+
+        .flash-message {
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-size: 13px;
+            letter-spacing: 0.3px;
+        }
+
+        .flash-message.error {
+            background: rgba(255, 51, 51, 0.15);
+            border: 1px solid #ff3333;
+            color: #ff6666;
+        }
+
+        .flash-message.success {
+            background: rgba(34, 197, 94, 0.15);
+            border: 1px solid #22c55e;
+            color: #86efac;
+        }
+
+        /* COD Info */
+        .cod-info {
+            background: #161616;
+            border: 1px solid #222222;
+            border-radius: 4px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .cod-info-title {
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .cod-info-list {
+            list-style: none;
+        }
+
+        .cod-info-list li {
+            padding: 6px 0;
+            color: #a0a0a0;
+            font-size: 13px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            letter-spacing: 0.3px;
+        }
+
+        .cod-info-list li:before {
+            content: "•";
+            color: #ffffff;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        /* Fixed Bottom Bar */
+        .bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #0b0b0b;
+            padding: 15px 20px;
+            border-top: 1px solid #222222;
+            z-index: 998;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 16px;
+            background: #ffffff;
+            color: #0b0b0b;
+            border: none;
+            border-radius: 2px;
+            font-weight: 600;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .submit-btn:hover {
+            background: #e0e0e0;
+        }
+
+        .submit-btn:active {
+            transform: translateY(1px);
+        }
+
+        .submit-btn:disabled {
+            background: #333333;
+            color: #666666;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        /* Input Helper Text */
+        .helper-text {
+            font-size: 11px;
+            color: #666666;
+            margin-top: 5px;
+            letter-spacing: 0.3px;
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            .checkout-container {
+                padding: 15px;
+            }
+
+            .product-summary,
+            .form-section,
+            .cod-info {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <a href="/product/{{ product.id }}" class="back-btn">←</a>
+        <h1 class="header-title">Checkout</h1>
+    </header>
+
+    <!-- Checkout Container -->
+    <div class="checkout-container">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                <div class="flash-message {{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Product Summary -->
+        <div class="product-summary">
+            <div class="summary-title">Your Order</div>
+            <div class="summary-content">
+                <div class="summary-image">
+                    {% if product.image_url %}
+                    <img src="{{ product.image_url }}" alt="{{ product.name }}">
+                    {% else %}
+                    👟
+                    {% endif %}
+                </div>
+                <div class="summary-details">
+                    <div class="summary-product-name">{{ product.name }}</div>
+                    <div class="summary-meta">
+                        Size {{ product.size }} • {{ product.condition or 'Like New' }}
+                    </div>
+                    <div class="summary-price">Rs {{ product.price|int }}</div>
+                    <div class="summary-note">+ Shipping charges</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- COD Information -->
+        <div class="cod-info">
+            <div class="cod-info-title">
+                Cash on Delivery
+            </div>
+            <ul class="cod-info-list">
+                <li>Pay when you receive the shoes at your doorstep</li>
+                <li>No advance payment required</li>
+                <li>Standard shipping charges apply</li>
+                <li>We'll contact you on WhatsApp to confirm</li>
+            </ul>
+        </div>
+
+        <!-- Checkout Form -->
+        <form method="POST" action="/checkout/{{ product.id }}">
+            <div class="form-section">
+                <div class="section-header">
+                    <span class="section-icon">📋</span>
+                    Delivery Details
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        Your Name <span class="required">*</span>
+                    </label>
+                    <input
+                        type="text"
+                        name="customer_name"
+                        class="form-input"
+                        placeholder="Enter your full name"
+                        required
+                        value="{{ request.form.get('customer_name', '') }}"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        WhatsApp Number <span class="required">*</span>
+                    </label>
+                    <input
+                        type="tel"
+                        name="whatsapp"
+                        class="form-input"
+                        placeholder="03XXXXXXXXX"
+                        required
+                        pattern="[0-9]{11}"
+                        value="{{ request.form.get('whatsapp', '') }}"
+                    >
+                    <div class="helper-text">We'll contact you on this number</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        Full Address <span class="required">*</span>
+                    </label>
+                    <textarea
+                        name="address"
+                        class="form-input"
+                        placeholder="House/Flat no., Street, Area, Landmark"
+                        required
+                    >{{ request.form.get('address', '') }}</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        City <span class="required">*</span>
+                    </label>
+                    <input
+                        type="text"
+                        name="city"
+                        class="form-input"
+                        placeholder="Enter your city"
+                        required
+                        value="{{ request.form.get('city', '') }}"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        Additional Notes (Optional)
+                    </label>
+                    <textarea
+                        name="notes"
+                        class="form-input"
+                        placeholder="Any special instructions for delivery?"
+                    >{{ request.form.get('notes', '') }}</textarea>
+                </div>
+            </div>
+
+            <!-- Fixed Bottom Bar -->
+            <div class="bottom-bar">
+                <button type="submit" class="submit-btn">
+                    Place Order • Rs {{ product.price|int }}
+                </button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
