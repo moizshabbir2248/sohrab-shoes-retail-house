@@ -3,65 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Login - Moiz Shoe Store</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: system-ui, -apple-system, sans-serif;
-            background: #0b0b0b;
-            color: #ffffff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            padding: 20px;
+    <title>Admin Login - Premium Store</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { surface: '#0f0f0f', card: '#1a1a1a', border: '#2a2a2a', muted: '#a0a0a0' },
+                    fontFamily: { sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'] },
+                }
+            }
         }
-        .login-card {
-            background: #161616;
-            border: 1px solid #222222;
-            border-radius: 4px;
-            padding: 40px 30px;
-            max-width: 400px;
-            width: 100%;
-        }
-        h1 { font-size: 24px; font-weight: 600; letter-spacing: 1px; margin-bottom: 10px; text-transform: uppercase; text-align: center; }
-        .subtitle { color: #a0a0a0; font-size: 13px; letter-spacing: 0.5px; text-align: center; margin-bottom: 30px; }
-        .form-group { margin-bottom: 20px; }
-        label { display: block; color: #a0a0a0; font-size: 12px; font-weight: 500; margin-bottom: 8px; letter-spacing: 0.5px; text-transform: uppercase; }
-        input { width: 100%; padding: 14px; background: #0b0b0b; border: 1px solid #333333; border-radius: 2px; color: #ffffff; font-size: 14px; }
-        input:focus { outline: none; border-color: #666666; }
-        input::placeholder { color: #555555; }
-        .login-btn { width: 100%; padding: 16px; background: #ffffff; color: #0b0b0b; border: none; border-radius: 2px; font-weight: 600; font-size: 12px; cursor: pointer; letter-spacing: 1.5px; text-transform: uppercase; }
-        .login-btn:hover { background: #e0e0e0; }
-        .error-message { background: rgba(255, 51, 51, 0.15); border: 1px solid #ff3333; border-radius: 4px; padding: 12px; margin-bottom: 20px; color: #ff6666; font-size: 13px; text-align: center; }
-        .back-link { text-align: center; margin-top: 20px; }
-        .back-link a { color: #a0a0a0; text-decoration: none; font-size: 12px; }
-        .back-link a:hover { color: #ffffff; }
-    </style>
+    </script>
+    <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');</style>
 </head>
-<body>
-    <div class="login-card">
-        <h1>🔐 Admin Login</h1>
-        <p class="subtitle">Moiz Shoe Store Dashboard</p>
+<body class="bg-surface text-white font-sans antialiased min-h-screen flex items-center justify-center p-4">
+    <div class="bg-card border border-border rounded-xl p-8 w-full max-w-sm">
+        <div class="text-center mb-8">
+            <div class="text-4xl mb-2">&#128274;</div>
+            <h1 class="text-xl font-bold tracking-wider uppercase">Admin Login</h1>
+            <p class="text-sm text-muted mt-1">Premium Store Dashboard</p>
+        </div>
+
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <div class="error-message">{{ message }}</div>
+                <div class="mb-4 px-4 py-3 rounded text-sm bg-red-900/40 border border-red-700 text-red-300">{{ message }}</div>
                 {% endfor %}
             {% endif %}
         {% endwith %}
-        <form method="POST">
-            <div class="form-group">
-                <label for="email">Admin Email</label>
-                <input type="email" id="email" name="email" placeholder="admin@example.com" required>
+
+        <form method="POST" class="space-y-5">
+            <div>
+                <label for="email" class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Admin Email</label>
+                <input type="email" id="email" name="email" placeholder="admin@example.com" required class="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white placeholder-muted/40 outline-none focus:border-white transition-colors">
             </div>
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" placeholder="Enter password" required>
+            <div>
+                <label for="password" class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Password</label>
+                <input type="password" id="password" name="password" placeholder="Enter password" required class="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white placeholder-muted/40 outline-none focus:border-white transition-colors">
             </div>
-            <button type="submit" class="login-btn">Login to Dashboard</button>
+            <button type="submit" class="w-full bg-white text-black text-xs font-bold tracking-[2px] uppercase py-4 rounded-lg hover:bg-neutral-200 transition-all">Login to Dashboard</button>
         </form>
-        <div class="back-link"><a href="/">← Back to Store</a></div>
+        <div class="text-center mt-5"><a href="/" class="text-xs text-muted hover:text-white transition-colors">&larr; Back to Store</a></div>
     </div>
 </body>
 </html>

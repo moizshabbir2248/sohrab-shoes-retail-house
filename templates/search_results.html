@@ -1,76 +1,95 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Search Results - {{ query }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        surface: '#0f0f0f',
+                        card: '#1a1a1a',
+                        border: '#2a2a2a',
+                        muted: '#a0a0a0',
+                        accent: '#f59e0b',
+                    },
+                    fontFamily: { sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'] },
+                }
+            }
+        }
+    </script>
+    <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');</style>
+</head>
+<body class="bg-surface text-white font-sans antialiased pb-20">
 
-{% block title %}Search Results - {{ query }}{% endblock %}
+    <!-- Header -->
+    <header class="fixed top-0 left-0 right-0 z-40 bg-surface/95 backdrop-blur-md border-b border-border px-4 py-3 flex items-center gap-4">
+        <a href="/" class="text-xl text-white hover:opacity-70 transition-opacity">&larr;</a>
+        <h1 class="text-sm font-semibold tracking-wider uppercase">Search Results</h1>
+    </header>
 
-{% block content %}
-<div class="container">
-    <!-- Search Header -->
-    <div class="search-header">
-        <h1>Search Results</h1>
-        <p class="search-query">Showing results for: <strong>"{{ query }}"</strong></p>
+    <!-- Main -->
+    <div class="mt-[57px] px-4 pt-6 max-w-6xl mx-auto">
+        <p class="text-sm text-muted mb-1">Showing results for: <strong class="text-white">&ldquo;{{ query }}&rdquo;</strong></p>
+
+        {% if products %}
+        <p class="text-xs text-muted mb-4">Found {{ products|length }} product(s)</p>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+            {% for product in products %}
+            <div class="bg-card border border-border rounded-lg overflow-hidden hover:border-accent/50 transition-all group {% if product.stock < 1 %}opacity-60{% endif %}">
+                <a href="/product/{{ product.id }}">
+                    <div class="aspect-square bg-black overflow-hidden relative">
+                        {% if product.image_url %}
+                        <img src="{{ product.image_url }}" alt="{{ product.name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                        {% endif %}
+                        <div class="w-full h-full items-center justify-center text-4xl opacity-20 {% if product.image_url %}hidden{% endif %}">👟</div>
+                        {% if product.stock < 1 %}
+                        <div class="absolute inset-0 bg-black/60 flex items-center justify-center"><span class="bg-red-600 text-white text-xs font-bold tracking-widest uppercase px-4 py-2">Sold Out</span></div>
+                        {% endif %}
+                    </div>
+                </a>
+                <div class="p-3">
+                    <h3 class="text-sm font-semibold text-white truncate">{{ product.name }}</h3>
+                    <div class="flex items-center gap-2 mt-1 text-xs text-muted">
+                        <span>Size {{ product.size }}</span>
+                    </div>
+                    <div class="flex items-center gap-2 mt-2">
+                        <span class="text-base font-bold text-white">Rs {{ product.price|int }}</span>
+                        {% if product.original_price and product.original_price > product.price %}
+                        <span class="text-xs text-muted line-through">Rs {{ product.original_price|int }}</span>
+                        {% endif %}
+                    </div>
+                    <a href="/product/{{ product.id }}" class="mt-2 block w-full text-center bg-white text-black text-[10px] font-semibold tracking-widest uppercase py-2.5 rounded hover:bg-neutral-200 transition-all">View</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-24">
+            <div class="text-5xl mb-4 opacity-30">&#128270;</div>
+            <h2 class="text-xl font-semibold text-white mb-2">No products found</h2>
+            <p class="text-sm text-muted">We couldn't find any products matching &ldquo;<strong class="text-white">{{ query }}</strong>&rdquo;</p>
+            <div class="mt-6 text-left inline-block">
+                <h3 class="text-xs font-semibold tracking-wider uppercase text-muted mb-2">Suggestions:</h3>
+                <ul class="text-sm text-muted space-y-1 list-disc list-inside">
+                    <li>Check your spelling</li>
+                    <li>Try different keywords</li>
+                    <li>Use more general search terms</li>
+                    <li>Try searching by brand name</li>
+                </ul>
+            </div>
+            <a href="/" class="inline-block mt-8 bg-white text-black text-xs font-bold tracking-[2px] uppercase px-8 py-4 rounded-lg hover:bg-neutral-200 transition-all">Browse All Products</a>
+        </div>
+        {% endif %}
     </div>
 
-    <!-- Search Results -->
-    <section class="section">
-        {% if products %}
-            <p class="results-count">Found {{ products|length }} product(s)</p>
+    <!-- Floating WhatsApp Button -->
+    <a href="https://wa.me/923322942248?text=Salam,%20mujhe%20shoes%20ke%20baare%20mein%20puchna%20hai" target="_blank" rel="noopener" class="fixed bottom-6 right-6 z-50 w-14 h-14 bg-[#25D366] rounded-full flex items-center justify-center shadow-lg shadow-[#25D366]/30 hover:scale-110 active:scale-95 transition-all duration-200">
+        <svg viewBox="0 0 24 24" class="w-7 h-7 fill-white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+    </a>
 
-            <div class="products-grid">
-                {% for product in products %}
-                <div class="product-card">
-                    <a href="{{ url_for('product_detail', product_id=product.id) }}" class="product-link">
-                        <div class="product-image">
-                            {% if product.image_url %}
-                                <img src="{{ product.image_url }}" alt="{{ product.name }}" loading="lazy">
-                            {% else %}
-                                <div class="product-placeholder">👟</div>
-                            {% endif %}
-                            {% if product.stock < 1 %}
-                                <span class="stock-badge out-of-stock">Sold Out</span>
-                            {% elif product.stock == 1 %}
-                                <span class="stock-badge last-piece">Last Piece</span>
-                            {% endif %}
-                        </div>
-                        <div class="product-info">
-                            <h3 class="product-name">{{ product.name }}</h3>
-                            <p class="product-brand">{{ product.brand }}</p>
-                            <div class="product-meta">
-                                <span class="product-size">Size: {{ product.size }}</span>
-                                <span class="product-condition condition-{{ product.condition.lower().replace(' ', '-') }}">
-                                    {{ product.condition }}
-                                </span>
-                            </div>
-                            <div class="product-pricing">
-                                <span class="product-price">Rs. {{ product.price }}</span>
-                                {% if product.original_price and product.original_price > product.price %}
-                                    <span class="product-original-price">Rs. {{ product.original_price }}</span>
-                                    <span class="product-discount">
-                                        -{{ ((product.original_price - product.price) / product.original_price * 100)|int }}%
-                                    </span>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </a>
-                </div>
-                {% endfor %}
-            </div>
-        {% else %}
-            <div class="empty-state">
-                <div class="empty-icon">🔍</div>
-                <h2>No products found</h2>
-                <p>We couldn't find any products matching "<strong>{{ query }}</strong>"</p>
-                <div class="empty-suggestions">
-                    <h3>Suggestions:</h3>
-                    <ul>
-                        <li>Check your spelling</li>
-                        <li>Try different keywords</li>
-                        <li>Use more general search terms</li>
-                        <li>Try searching by brand name</li>
-                    </ul>
-                </div>
-                <a href="{{ url_for('home') }}" class="btn btn-primary">Browse All Products</a>
-            </div>
-        {% endif %}
-    </section>
-</div>
-{% endblock %}
+</body>
+</html>

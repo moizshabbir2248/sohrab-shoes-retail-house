@@ -1,0 +1,15 @@
+{
+  "buildCommand": "pip install -r requirements.txt",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/api/wsgi.py"
+    }
+  ],
+  "functions": {
+    "api/wsgi.py": {
+      "memory": 512,
+      "maxDuration": 30
+    }
+  }
+}

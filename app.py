@@ -1,180 +1,76 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from functools import wraps
 from werkzeug.utils import secure_filename
-import sqlite3
 import os
 from datetime import datetime
+from dotenv import load_dotenv
 
-# Initialize Flask app
+load_dotenv()
+
+from db_config import (
+    init_connection_pool, close_all_connections,
+
+    init_products_table, get_all_products_db, get_product_by_id_db,
+    add_product_to_db, update_product_in_db, delete_product_from_db,
+    search_products_db, filter_products_by_size_db, reduce_stock_db,
+
+    init_orders_table, create_order, get_order_by_id, get_all_orders,
+    update_order_status,
+
+    init_completed_orders_table, mark_order_complete, get_completed_orders
+)
+
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'moiz_shoe_store_secret_2026'
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'moiz_shoe_store_secret_2026')
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
-# Create upload folder if it doesn't exist
+ADMIN_EMAIL = os.getenv('ADMIN_EMAIL', 'moizshabbir2248@gmail.com')
+ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'abdulmoiz217@')
+
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# Database helper
-def get_db():
-    conn = sqlite3.connect('shoes.db')
-    conn.row_factory = sqlite3.Row
-    return conn
-
-def init_database():
-    """Initialize database tables if they don't exist"""
-    conn = get_db()
-    cursor = conn.cursor()
-
-    # Create products table
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS products (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT NOT NULL,
-            name TEXT,
-            brand TEXT,
-            description TEXT,
-            price REAL NOT NULL,
-            original_price REAL,
-            size TEXT NOT NULL,
-            condition TEXT,
-            condition_rating REAL DEFAULT 9.0,
-            color TEXT,
-            category TEXT,
-            location TEXT,
-            code TEXT,
-            image_url TEXT,
-            stock INTEGER DEFAULT 1,
-            featured INTEGER DEFAULT 0,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            is_sale INTEGER DEFAULT 0,
-            sale_end_time TEXT,
-            bundle_pack TEXT,
-            shipping_rule TEXT DEFAULT 'Standard Shipping Applies',
-            imported_premium INTEGER DEFAULT 0
-        )
-    """)
-
-    # Create orders table
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS orders (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            product_id INTEGER NOT NULL,
-            customer_name TEXT NOT NULL,
-            whatsapp TEXT NOT NULL,
-            address TEXT NOT NULL,
-            city TEXT NOT NULL,
-            order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            status TEXT DEFAULT 'pending',
-            notes TEXT,
-            FOREIGN KEY (product_id) REFERENCES products (id)
-        )
-    """)
-
-    conn.commit()
-    conn.close()
-    print("[OK] Database initialized: shoes.db")
 
 # ==================== ROUTES ====================
 
 @app.route('/')
 def home():
-    """Home page - Display product catalog"""
     size = request.args.get('size')
 
-    conn = get_db()
-    cursor = conn.cursor()
-
-    # Query products - map 'name' or 'title' column to work with templates
-    query = """
-        SELECT id,
-               COALESCE(title, name) as title,
-               COALESCE(name, title) as name,
-               brand, price, original_price, size, stock, code,
-               condition_rating, image_url, category, is_sale, sale_end_time
-        FROM products
-        WHERE stock > 0
-    """
-
     if size:
-        query += " AND size = ?"
-        cursor.execute(query + " ORDER BY id DESC", (size,))
+        products = filter_products_by_size_db(size)
     else:
-        cursor.execute(query + " ORDER BY id DESC")
-
-    products = cursor.fetchall()
-    conn.close()
+        products = get_all_products_db()
 
     return render_template('index.html', products=products)
 
 
-@app.route('/product/<int:product_id>')
+@app.route('/product/<product_id>')
 def product_detail(product_id):
-    """Product detail page"""
-    conn = get_db()
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        SELECT id,
-               COALESCE(title, name) as title,
-               COALESCE(name, title) as name,
-               brand, description, price, original_price, size, stock, code,
-               condition, condition_rating, image_url, category, color,
-               shipping_rule
-        FROM products
-        WHERE id = ?
-    """, (product_id,))
-
-    product = cursor.fetchone()
+    product = get_product_by_id_db(product_id)
 
     if not product:
-        conn.close()
         return render_template('404.html'), 404
 
-    # Get related products
-    cursor.execute("""
-        SELECT id,
-               COALESCE(title, name) as title,
-               COALESCE(name, title) as name,
-               price, image_url, size
-        FROM products
-        WHERE id != ? AND stock > 0
-        LIMIT 4
-    """, (product_id,))
-
-    related_products = cursor.fetchall()
-    conn.close()
+    all_products = get_all_products_db()
+    related_products = [p for p in all_products if p['id'] != product_id][:4]
 
     return render_template('product.html', product=product, related_products=related_products)
 
 
-@app.route('/checkout/<int:product_id>', methods=['GET', 'POST'])
+@app.route('/checkout/<product_id>', methods=['GET', 'POST'])
 def checkout(product_id):
-    """Checkout page - COD order form"""
-    conn = get_db()
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        SELECT id,
-               COALESCE(title, name) as title,
-               COALESCE(name, title) as name,
-               price, stock, image_url, size, condition
-        FROM products
-        WHERE id = ?
-    """, (product_id,))
-
-    product = cursor.fetchone()
+    product = get_product_by_id_db(product_id)
 
     if not product:
-        conn.close()
         return render_template('404.html'), 404
 
-    if product['stock'] < 1:
+    if product.get('stock', 0) < 1:
         flash('Sorry, this product is out of stock.', 'error')
-        conn.close()
         return redirect(url_for('product_detail', product_id=product_id))
 
     if request.method == 'POST':
@@ -183,88 +79,66 @@ def checkout(product_id):
         address = request.form.get('address', '').strip()
         city = request.form.get('city', '').strip()
         notes = request.form.get('notes', '').strip()
+        quantity = int(request.form.get('quantity', 1))
+        scheme = request.form.get('scheme', 'None')
 
         if not all([customer_name, whatsapp, address, city]):
             flash('Please fill in all required fields.', 'error')
-            conn.close()
             return render_template('checkout.html', product=product)
 
+        total_price = product['price'] * quantity
+        product_identifier = f"{product['id']} - {product['title']}"
+
         try:
-            # Create order
-            cursor.execute("""
-                INSERT INTO orders (product_id, customer_name, whatsapp, address, city, notes, status, order_date)
-                VALUES (?, ?, ?, ?, ?, ?, 'pending', ?)
-            """, (product_id, customer_name, whatsapp, address, city, notes, datetime.utcnow()))
+            order_id = create_order(
+                customer_name=customer_name,
+                phone_number=whatsapp,
+                delivery_address=address,
+                city=city,
+                product_id_or_name=product_identifier,
+                quantity=quantity,
+                total_price=total_price,
+                notes=notes,
+                scheme=scheme
+            )
 
-            order_id = cursor.lastrowid
-
-            # Reduce stock
-            cursor.execute("UPDATE products SET stock = stock - 1 WHERE id = ?", (product_id,))
-
-            conn.commit()
-            conn.close()
-
-            flash(f'Order placed successfully! Order ID: {order_id}', 'success')
-            return redirect(url_for('order_confirmation', order_id=order_id))
+            if order_id:
+                reduce_stock_db(product_id, quantity)
+                flash(f'Order placed successfully! Order ID: {order_id}', 'success')
+                return redirect(url_for('order_confirmation', order_id=order_id))
+            else:
+                flash('An error occurred. Please try again.', 'error')
+                return render_template('checkout.html', product=product)
 
         except Exception as e:
-            conn.rollback()
-            conn.close()
             flash('An error occurred. Please try again.', 'error')
             print(f"Error: {e}")
             return render_template('checkout.html', product=product)
 
-    conn.close()
     return render_template('checkout.html', product=product)
 
 
 @app.route('/order-confirmation/<int:order_id>')
 def order_confirmation(order_id):
-    """Order confirmation page"""
-    conn = get_db()
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        SELECT o.*,
-               COALESCE(p.title, p.name) as product_name,
-               p.price, p.brand, p.size, p.condition
-        FROM orders o
-        LEFT JOIN products p ON o.product_id = p.id
-        WHERE o.id = ?
-    """, (order_id,))
-
-    order = cursor.fetchone()
-    conn.close()
+    order = get_order_by_id(order_id)
 
     if not order:
         return render_template('404.html'), 404
 
-    return render_template('order_confirmation.html', order=order)
+    product_id = order['product_id_or_name'].split(' - ')[0] if ' - ' in order['product_id_or_name'] else None
+    product = get_product_by_id_db(product_id) if product_id else None
+
+    return render_template('order_confirmation.html', order=order, product=product)
 
 
 @app.route('/search')
 def search():
-    """Search products"""
     query = request.args.get('q', '').strip()
 
     if not query:
         return redirect(url_for('home'))
 
-    conn = get_db()
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        SELECT id,
-               COALESCE(title, name) as title,
-               COALESCE(name, title) as name,
-               brand, price, image_url, size, stock
-        FROM products
-        WHERE (COALESCE(title, name) LIKE ? OR brand LIKE ? OR description LIKE ?)
-        AND stock > 0
-    """, (f'%{query}%', f'%{query}%', f'%{query}%'))
-
-    products = cursor.fetchall()
-    conn.close()
+    products = search_products_db(query)
 
     return render_template('search_results.html', products=products, query=query)
 
@@ -273,12 +147,11 @@ def search():
 
 @app.route('/moiz-admin/login', methods=['GET', 'POST'])
 def moiz_admin_login():
-    """Moiz Admin Login"""
     if request.method == 'POST':
         email = request.form.get('email', '').strip()
         password = request.form.get('password', '')
 
-        if email == 'moizshabbir2248@gmail.com' and password == 'abdulmoiz217@':
+        if email == ADMIN_EMAIL and password == ADMIN_PASSWORD:
             session['logged_in'] = True
             return redirect(url_for('moiz_admin'))
         else:
@@ -289,7 +162,6 @@ def moiz_admin_login():
 
 @app.route('/moiz-admin/logout')
 def moiz_admin_logout():
-    """Moiz Admin Logout"""
     session.pop('logged_in', None)
     flash('Logged out successfully.', 'success')
     return redirect(url_for('moiz_admin_login'))
@@ -297,145 +169,129 @@ def moiz_admin_logout():
 
 @app.route('/moiz-admin', methods=['GET', 'POST'])
 def moiz_admin():
-    """Moiz Admin Dashboard - Protected"""
     if not session.get('logged_in'):
         return redirect(url_for('moiz_admin_login'))
-
-    conn = get_db()
-    cursor = conn.cursor()
 
     if request.method == 'POST':
         action = request.form.get('action')
 
         if action == 'add_product':
             try:
-                # Handle image upload or URL
-                image_path = None
-                if 'image_file' in request.files:
-                    file = request.files['image_file']
-                    if file and file.filename and allowed_file(file.filename):
-                        filename = secure_filename(file.filename)
-                        # Add timestamp to avoid conflicts
-                        filename = f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}"
-                        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-                        image_path = f"/static/uploads/{filename}"
+                product_id = request.form.get('product_id', '').strip()
+                title = request.form.get('title', '').strip()
+                size = request.form.get('size', '').strip()
+                price = float(request.form.get('price', 0))
+                original_price = request.form.get('original_price', '').strip()
+                code = request.form.get('code', '').strip()
+                condition_rating = float(request.form.get('condition_rating', 9.0))
+                stock = int(request.form.get('stock', 1))
 
-                # If no file uploaded, use URL from text input
-                if not image_path:
-                    image_path = request.form.get('image_url') or None
+                file = request.files.get('image_file')
+                if not file or not file.filename:
+                    flash('Please select a product photo to upload.', 'error')
+                    return redirect(url_for('moiz_admin'))
 
-                cursor.execute("""
-                    INSERT INTO products (title, size, price, original_price, code, condition_rating,
-                                        image_url, shipping_rule, is_sale, sale_end_time, bundle_pack,
-                                        imported_premium, stock)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
-                """, (
-                    request.form.get('title'),
-                    request.form.get('size'),
-                    request.form.get('price'),
-                    request.form.get('original_price') or None,
-                    request.form.get('code', '').strip() or None,
-                    request.form.get('condition_rating', 9.0),
-                    image_path,
-                    'Free Shipping' if request.form.get('free_shipping') else 'Standard Shipping Applies',
-                    1 if request.form.get('is_sale') else 0,
-                    request.form.get('sale_end_time') or None,
-                    request.form.get('bundle_pack') or None,
-                    1 if request.form.get('imported_premium') else 0
-                ))
-                conn.commit()
-                flash('Product added successfully!', 'success')
+                if not allowed_file(file.filename):
+                    flash('Invalid file type. Allowed: png, jpg, jpeg, gif, webp', 'error')
+                    return redirect(url_for('moiz_admin'))
+
+                filename = secure_filename(file.filename)
+                filename = f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}"
+                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                image_path = f"/static/uploads/{filename}"
+
+                data = {
+                    'product_id': product_id,
+                    'title': title,
+                    'price': price,
+                    'size': size,
+                    'image_url': image_path,
+                    'original_price': float(original_price) if original_price else None,
+                    'stock': stock,
+                    'code': code or None,
+                    'condition_rating': condition_rating,
+                    'is_sale': 1 if request.form.get('is_sale') else 0,
+                    'sale_end_time': request.form.get('sale_end_time') or None,
+                    'shipping_rule': 'Free Shipping' if request.form.get('free_shipping') else 'Standard Shipping Applies',
+                    'imported_premium': 1 if request.form.get('imported_premium') else 0,
+                    'brand': None,
+                    'description': None,
+                    'color': None,
+                    'category': None,
+                    'condition': None
+                }
+
+                if add_product_to_db(data):
+                    flash(f'Product {product_id} added successfully!', 'success')
+                else:
+                    flash('Error adding product to database.', 'error')
+
             except Exception as e:
-                conn.rollback()
                 flash(f'Error adding product: {e}', 'error')
-
-        elif action == 'delete_product':
-            try:
-                product_id = request.form.get('product_id')
-                cursor.execute("DELETE FROM products WHERE id = ?", (product_id,))
-                conn.commit()
-                flash('Product deleted successfully!', 'success')
-            except Exception as e:
-                conn.rollback()
-                flash(f'Error deleting product: {e}', 'error')
 
         elif action == 'edit_product':
             try:
-                cursor.execute("""
-                    UPDATE products
-                    SET title = ?, size = ?, price = ?, original_price = ?,
-                        code = ?, condition_rating = ?, stock = ?
-                    WHERE id = ?
-                """, (
-                    request.form.get('title'),
-                    request.form.get('size'),
-                    request.form.get('price'),
-                    request.form.get('original_price') or None,
-                    request.form.get('code', '').strip() or None,
-                    request.form.get('condition_rating', 9.0),
-                    request.form.get('stock', 1),
-                    request.form.get('product_id')
-                ))
-                conn.commit()
-                flash('Product updated successfully!', 'success')
+                product_id = request.form.get('product_id', '').strip()
+                data = {
+                    'title': request.form.get('title', '').strip(),
+                    'size': request.form.get('size', '').strip(),
+                    'price': float(request.form.get('price', 0)),
+                    'original_price': float(request.form.get('original_price', 0)) if request.form.get('original_price') else None,
+                    'code': request.form.get('code', '').strip() or None,
+                    'condition_rating': float(request.form.get('condition_rating', 9.0)),
+                    'stock': int(request.form.get('stock', 0))
+                }
+                if update_product_in_db(product_id, data):
+                    flash('Product updated successfully!', 'success')
+                else:
+                    flash('Failed to update product.', 'error')
             except Exception as e:
-                conn.rollback()
                 flash(f'Error updating product: {e}', 'error')
 
-        conn.close()
+        elif action == 'delete_product':
+            try:
+                product_id = request.form.get('product_id', '').strip()
+                if delete_product_from_db(product_id):
+                    flash('Product deleted successfully!', 'success')
+                else:
+                    flash('Failed to delete product.', 'error')
+            except Exception as e:
+                flash(f'Error deleting product: {e}', 'error')
+
+        elif action == 'mark_complete':
+            try:
+                order_id = request.form.get('order_id')
+                if mark_order_complete(order_id):
+                    flash('Order marked as complete and moved to history!', 'success')
+                else:
+                    flash('Failed to mark order complete.', 'error')
+            except Exception as e:
+                flash(f'Error: {e}', 'error')
+
+        elif action == 'update_order_status':
+            try:
+                order_id = request.form.get('order_id')
+                new_status = request.form.get('status')
+                if update_order_status(order_id, new_status):
+                    flash('Order status updated successfully!', 'success')
+                else:
+                    flash('Failed to update order status.', 'error')
+            except Exception as e:
+                flash(f'Error updating order: {e}', 'error')
+
         return redirect(url_for('moiz_admin'))
 
-    # GET request - fetch data
-    cursor.execute("""
-        SELECT o.*, COALESCE(p.title, p.name) as product_title
-        FROM orders o
-        LEFT JOIN products p ON o.product_id = p.id
-        WHERE o.status = 'pending'
-        ORDER BY o.order_date DESC
-    """)
-    orders = cursor.fetchall()
+    orders = get_all_orders()
+    products = get_all_products_db()
+    completed_orders = get_completed_orders()
 
-    cursor.execute("""
-        SELECT id, COALESCE(title, name) as title, size, price, original_price,
-               code, stock, image_url, shipping_rule
-        FROM products
-        ORDER BY id DESC
-    """)
-    products = cursor.fetchall()
-
-    conn.close()
-    return render_template('moiz_admin.html', orders=orders, products=products)
-
-
-@app.route('/moiz-admin-orders')
-def moiz_admin_orders():
-    """Orders dashboard - Protected"""
-    if not session.get('logged_in'):
-        return redirect(url_for('moiz_admin_login'))
-
-    conn = get_db()
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        SELECT o.id, o.customer_name, o.whatsapp, o.address, o.city,
-               o.status, o.order_date,
-               COALESCE(p.title, p.name) as product_title
-        FROM orders o
-        LEFT JOIN products p ON o.product_id = p.id
-        ORDER BY o.order_date DESC
-    """)
-
-    orders = cursor.fetchall()
-    conn.close()
-
-    return render_template('orders_dashboard.html', orders=orders)
+    return render_template('moiz_admin.html', orders=orders, products=products, completed_orders=completed_orders)
 
 
 # ==================== CONTEXT PROCESSOR ====================
 
 @app.context_processor
 def utility_processor():
-    """Make utility functions available in templates"""
     def format_datetime(dt):
         if dt:
             if isinstance(dt, str):
@@ -454,7 +310,6 @@ def utility_processor():
 def page_not_found(e):
     return render_template('404.html'), 404
 
-
 @app.errorhandler(500)
 def internal_error(e):
     return render_template('500.html'), 500
@@ -463,16 +318,41 @@ def internal_error(e):
 # ==================== RUN APPLICATION ====================
 
 if __name__ == '__main__':
-    # Initialize database on startup
-    init_database()
-
-    print("\n" + "="*50)
+    print("\n" + "="*60)
     print("Shoes E-commerce Application Starting...")
-    print("="*50)
-    print("Access: http://127.0.0.1:5000")
-    print("Admin Login: http://127.0.0.1:5000/moiz-admin/login")
-    print("Email: moizshabbir2248@gmail.com")
-    print("Using: sqlite3 (no SQLAlchemy)")
-    print("="*50 + "\n")
+    print("="*60)
 
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    print("Connecting to Neon DB (PostgreSQL)...")
+    if init_connection_pool():
+        print("[OK] Connection pool initialized")
+    else:
+        print("[ERROR] Failed to initialize connection pool")
+        exit(1)
+
+    print("Setting up products table...")
+    init_products_table()
+
+    print("Setting up orders table...")
+    init_orders_table()
+
+    print("Setting up completed_orders table...")
+    init_completed_orders_table()
+
+    print("\n" + "="*60)
+    print("[OK] Database: Neon DB (PostgreSQL) - All tables")
+    print("[OK] Products: Stored in Neon DB")
+    print("[OK] Orders: Stored in Neon DB")
+    print("[OK] Completed Orders: Stored in Neon DB")
+    print("="*60)
+    print("\nAccess URLs:")
+    print("   Main Site: http://127.0.0.1:5000")
+    print("   Admin Panel: http://127.0.0.1:5000/moiz-admin/login")
+    print("   Email: moizshabbir2248@gmail.com")
+    print("="*60 + "\n")
+
+    try:
+        app.run(debug=True, host='0.0.0.0', port=5000)
+    finally:
+        print("\nClosing database connections...")
+        close_all_connections()
+        print("[OK] Application shut down cleanly\n")

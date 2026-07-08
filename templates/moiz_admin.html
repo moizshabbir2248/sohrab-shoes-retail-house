@@ -3,882 +3,366 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Moiz Admin Dashboard</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: system-ui, -apple-system, sans-serif;
-            background: #0b0b0b;
-            color: #ffffff;
-            min-height: 100vh;
-        }
-        .header {
-            background: #161616;
-            border-bottom: 1px solid #222222;
-            padding: 20px 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        h1 { font-size: 22px; font-weight: 600; letter-spacing: 0.5px; }
-        .logout-btn {
-            background: transparent;
-            color: #a0a0a0;
-            border: 1px solid #333333;
-            padding: 8px 16px;
-            border-radius: 2px;
-            text-decoration: none;
-            font-size: 11px;
-            font-weight: 600;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            transition: all 0.2s;
-        }
-        .logout-btn:hover { border-color: #666666; color: #ffffff; }
-
-        /* Tab Navigation */
-        .tabs {
-            background: #161616;
-            border-bottom: 1px solid #222222;
-            display: flex;
-            gap: 5px;
-            padding: 0 30px;
-        }
-        .tab-btn {
-            padding: 15px 25px;
-            background: transparent;
-            border: none;
-            color: #666666;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-            border-bottom: 2px solid transparent;
-            transition: all 0.2s;
-        }
-        .tab-btn:hover { color: #a0a0a0; }
-        .tab-btn.active {
-            color: #ffffff;
-            border-bottom-color: #ffffff;
-        }
-
-        /* Content Area */
-        .container {
-            max-width: 1600px;
-            margin: 0 auto;
-            padding: 30px;
-        }
-        .tab-content {
-            display: none;
-        }
-        .tab-content.active {
-            display: block;
-        }
-
-        /* Section Headers */
-        .section-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 25px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #222222;
-        }
-        .section-header h2 {
-            font-size: 18px;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-        }
-        .section-header span {
-            font-size: 24px;
-        }
-
-        /* Flash Messages */
-        .flash {
-            padding: 12px 20px;
-            margin-bottom: 20px;
-            border-radius: 3px;
-            font-size: 13px;
-        }
-        .flash.success {
-            background: #1a3a1a;
-            border: 1px solid #2d5a2d;
-            color: #7dff7d;
-        }
-        .flash.error {
-            background: #3a1a1a;
-            border: 1px solid #5a2d2d;
-            color: #ff7d7d;
-        }
-
-        /* Tables */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: #161616;
-            border: 1px solid #222222;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-        thead {
-            background: #1a1a1a;
-        }
-        th {
-            padding: 15px;
-            text-align: left;
-            font-size: 11px;
-            font-weight: 600;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            color: #a0a0a0;
-            border-bottom: 1px solid #222222;
-        }
-        td {
-            padding: 15px;
-            font-size: 13px;
-            border-bottom: 1px solid #1a1a1a;
-        }
-        tbody tr:hover {
-            background: #1a1a1a;
-        }
-        tbody tr:last-child td {
-            border-bottom: none;
-        }
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: #666666;
-            font-size: 14px;
-        }
-
-        /* Buttons */
-        .btn {
-            padding: 8px 16px;
-            border: 1px solid #333333;
-            border-radius: 2px;
-            font-size: 11px;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-decoration: none;
-            display: inline-block;
-        }
-        .btn-whatsapp {
-            background: #25d366;
-            color: #000000;
-            border-color: #25d366;
-        }
-        .btn-whatsapp:hover {
-            background: #20ba56;
-            border-color: #20ba56;
-        }
-        .btn-delete {
-            background: transparent;
-            color: #ff4444;
-            border-color: #ff4444;
-        }
-        .btn-delete:hover {
-            background: #ff4444;
-            color: #ffffff;
-        }
-
-        /* Form Layout */
-        .form-container {
-            display: grid;
-            gap: 25px;
-        }
-        .form-card {
-            background: #161616;
-            border: 1px solid #222222;
-            border-radius: 4px;
-            padding: 30px;
-        }
-        .form-card-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 25px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #222222;
-        }
-        .form-card-header h3 {
-            font-size: 16px;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-        }
-        .form-card-header span {
-            font-size: 20px;
-        }
-
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-        }
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        .form-group.full-width {
-            grid-column: 1 / -1;
-        }
-        label {
-            font-size: 11px;
-            font-weight: 600;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            color: #a0a0a0;
-        }
-        input[type="text"],
-        input[type="number"],
-        input[type="url"],
-        input[type="datetime-local"],
-        select,
-        textarea {
-            padding: 12px;
-            background: #0b0b0b;
-            border: 1px solid #333333;
-            border-radius: 2px;
-            color: #ffffff;
-            font-size: 13px;
-            outline: none;
-            transition: border-color 0.2s;
-            font-family: inherit;
-        }
-        textarea {
-            resize: vertical;
-            min-height: 60px;
-        }
-        input:focus,
-        select:focus,
-        textarea:focus {
-            border-color: #666666;
-        }
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 0;
-        }
-        input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-        }
-        .checkbox-group label {
-            text-transform: none;
-            font-size: 13px;
-            color: #ffffff;
-            cursor: pointer;
-        }
-
-        /* Discount Calculator */
-        .discount-calculator {
-            display: grid;
-            grid-template-columns: 1fr 1fr auto;
-            gap: 15px;
-            align-items: end;
-        }
-        .discount-badge {
-            background: #ff4444;
-            color: #ffffff;
-            padding: 12px 20px;
-            border-radius: 2px;
-            font-size: 16px;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-            text-align: center;
-            min-width: 100px;
-            display: none;
-        }
-        .discount-badge.active {
-            display: block;
-        }
-
-        /* Marketing Toggles */
-        .marketing-toggles {
-            display: grid;
-            gap: 12px;
-        }
-
-        .btn-submit {
-            background: #ffffff;
-            color: #0b0b0b;
-            border: none;
-            padding: 14px 40px;
-            font-size: 12px;
-            font-weight: 700;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: all 0.2s;
-            border-radius: 2px;
-        }
-        .btn-submit:hover {
-            background: #e0e0e0;
-        }
-
-        /* Badge */
-        .badge {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 2px;
-            font-size: 10px;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-        }
-        .badge-free {
-            background: #1a3a1a;
-            color: #7dff7d;
-        }
-        .badge-paid {
-            background: #3a3a1a;
-            color: #ffff7d;
-        }
-        .badge-premium {
-            background: #3a2a1a;
-            color: #ffd700;
-        }
-        .badge-sold-out {
-            background: #3a1a1a;
-            color: #ff4444;
-            font-weight: 700;
-        }
-
-        /* Modal */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.85);
-            z-index: 9999;
-            overflow-y: auto;
-        }
-        .modal.active {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        .modal-content {
-            background: #161616;
-            border: 1px solid #333333;
-            border-radius: 4px;
-            max-width: 700px;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-        .modal-header {
-            padding: 20px 25px;
-            border-bottom: 1px solid #222222;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .modal-header h3 {
-            font-size: 16px;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-        }
-        .modal-close {
-            background: transparent;
-            border: none;
-            color: #666666;
-            font-size: 24px;
-            cursor: pointer;
-            padding: 0;
-            width: 30px;
-            height: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: color 0.2s;
-        }
-        .modal-close:hover {
-            color: #ffffff;
-        }
-        .modal-body {
-            padding: 25px;
-        }
-        .btn-edit {
-            background: transparent;
-            color: #ffa500;
-            border-color: #ffa500;
-            margin-right: 8px;
-        }
-        .btn-edit:hover {
-            background: #ffa500;
-            color: #0b0b0b;
-        }
-
-        /* Helper Text */
-        .helper-text {
-            font-size: 11px;
-            color: #666666;
-            margin-top: 5px;
-        }
-
-        /* Drag & Drop Upload Area */
-        .upload-area {
-            border: 2px dashed #333333;
-            border-radius: 4px;
-            padding: 40px 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            background: #0b0b0b;
-        }
-        .upload-area:hover {
-            border-color: #666666;
-            background: #0f0f0f;
-        }
-        .upload-area.dragover {
-            border-color: #ffffff;
-            background: #1a1a1a;
-        }
-        .upload-icon {
-            font-size: 48px;
-            margin-bottom: 15px;
-            opacity: 0.5;
-        }
-        .upload-text {
-            font-size: 13px;
-            color: #a0a0a0;
-            margin-bottom: 8px;
-        }
-        .upload-hint {
-            font-size: 11px;
-            color: #666666;
-        }
-        .file-name-display {
-            margin-top: 15px;
-            padding: 10px;
-            background: #1a1a1a;
-            border-radius: 2px;
-            font-size: 12px;
-            color: #7dff7d;
-            display: none;
-        }
-        .file-name-display.active {
-            display: block;
-        }
+    <title>Admin Dashboard - Premium Store</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { surface: '#0f0f0f', card: '#1a1a1a', border: '#2a2a2a', muted: '#a0a0a0', accent: '#f59e0b' },
+                    fontFamily: { sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'] },
+                }
+            }
+        }
+    </script>
+    <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
     </style>
 </head>
-<body>
-    <div class="header">
-        <h1>👟 Moiz Admin Dashboard</h1>
-        <a href="/moiz-admin/logout" class="logout-btn">Logout</a>
+<body class="bg-surface text-white font-sans antialiased min-h-screen">
+
+    <!-- Header -->
+    <div class="bg-card border-b border-border px-4 md:px-8 py-4 flex items-center justify-between">
+        <h1 class="text-base md:text-lg font-bold tracking-wider">&#128095; Admin Dashboard</h1>
+        <a href="/moiz-admin/logout" class="text-xs text-muted tracking-wider uppercase border border-border px-4 py-2 rounded hover:border-white hover:text-white transition-all">Logout</a>
     </div>
 
-    <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab(event, 'orders')">🛒 Live COD Orders</button>
-        <button class="tab-btn" onclick="switchTab(event, 'inventory')">📦 Manage Store Inventory</button>
-        <button class="tab-btn" onclick="switchTab(event, 'add')">➕ Add New Product</button>
+    <!-- Tab Navigation -->
+    <div class="bg-card border-b border-border flex overflow-x-auto scrollbar-hide px-2 md:px-6">
+        <button class="tab-btn px-4 md:px-6 py-3 text-xs font-semibold tracking-wider uppercase text-white border-b-2 border-white whitespace-nowrap" onclick="switchTab(event,'orders')">&#128072; Live Orders</button>
+        <button class="tab-btn px-4 md:px-6 py-3 text-xs font-semibold tracking-wider uppercase text-muted border-b-2 border-transparent hover:text-white whitespace-nowrap" onclick="switchTab(event,'completed')">&#10003; Completed</button>
+        <button class="tab-btn px-4 md:px-6 py-3 text-xs font-semibold tracking-wider uppercase text-muted border-b-2 border-transparent hover:text-white whitespace-nowrap" onclick="switchTab(event,'inventory')">&#128230; Inventory</button>
+        <button class="tab-btn px-4 md:px-6 py-3 text-xs font-semibold tracking-wider uppercase text-muted border-b-2 border-transparent hover:text-white whitespace-nowrap" onclick="switchTab(event,'add')">&#10133; Add Product</button>
     </div>
 
-    <div class="container">
+    <!-- Container -->
+    <div class="p-4 md:p-8 max-w-7xl mx-auto">
+
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
+            <div class="mb-6 space-y-2">
                 {% for category, message in messages %}
-                    <div class="flash {{ category }}">{{ message }}</div>
+                <div class="px-4 py-3 rounded text-sm {% if category == 'success' %}bg-emerald-900/40 border border-emerald-700 text-emerald-300{% else %}bg-red-900/40 border border-red-700 text-red-300{% endif %}">{{ message }}</div>
                 {% endfor %}
+            </div>
             {% endif %}
         {% endwith %}
 
-        <!-- TAB 1: Live COD Orders -->
+        <!-- TAB 1: Live Orders -->
         <div id="orders" class="tab-content active">
-            <div class="section-header">
-                <span>🛒</span>
-                <h2>Live COD Orders</h2>
+            <div class="flex items-center gap-2 mb-5 pb-3 border-b border-border">
+                <span class="text-lg">&#128072;</span>
+                <h2 class="text-base font-semibold tracking-wider">Live COD Orders</h2>
             </div>
             {% if orders %}
-                <table>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
                     <thead>
-                        <tr>
-                            <th>Order ID</th>
-                            <th>Product</th>
-                            <th>Customer</th>
-                            <th>WhatsApp</th>
-                            <th>Address</th>
-                            <th>City</th>
-                            <th>Order Date</th>
-                            <th>Action</th>
+                        <tr class="bg-card text-muted text-[10px] tracking-wider uppercase">
+                            <th class="p-3 font-semibold border-b border-border">Order ID</th>
+                            <th class="p-3 font-semibold border-b border-border">Product</th>
+                            <th class="p-3 font-semibold border-b border-border">Customer</th>
+                            <th class="p-3 font-semibold border-b border-border">WhatsApp</th>
+                            <th class="p-3 font-semibold border-b border-border">Address</th>
+                             <th class="p-3 font-semibold border-b border-border">City</th>
+                            <th class="p-3 font-semibold border-b border-border">Deal/Scheme</th>
+                            <th class="p-3 font-semibold border-b border-border">Date</th>
+                            <th class="p-3 font-semibold border-b border-border">Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for order in orders %}
-                        <tr>
-                            <td>#{{ order.id }}</td>
-                            <td>{{ order.product_title }}</td>
-                            <td>{{ order.customer_name }}</td>
-                            <td>{{ order.whatsapp }}</td>
-                            <td>{{ order.address }}</td>
-                            <td>{{ order.city }}</td>
-                            <td>{{ format_datetime(order.order_date) }}</td>
-                            <td>
-                                <a href="https://wa.me/92{{ order.whatsapp.lstrip('0') }}?text=Hi%20{{ order.customer_name }}!%20Your%20order%20%23{{ order.id }}%20is%20confirmed.%20We'll%20deliver%20to%20{{ order.address }}%2C%20{{ order.city }}"
-                                   target="_blank"
-                                   class="btn btn-whatsapp">
-                                    💬 Chat
-                                </a>
+                        <tr class="border-b border-border hover:bg-card/50 transition-colors">
+                            <td class="p-3 text-sm font-semibold">#{{ order.id }}</td>
+                            <td class="p-3 text-sm">{{ order.product_id_or_name }}</td>
+                            <td class="p-3 text-sm">{{ order.customer_name }}</td>
+                            <td class="p-3 text-sm">{{ order.phone_number }}</td>
+                            <td class="p-3 text-sm max-w-[150px] truncate">{{ order.delivery_address }}</td>
+                            <td class="p-3 text-sm">{{ order.city }}</td>
+                            <td class="p-3 text-sm">{% if order.scheme and order.scheme != 'None' %}<span class="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded {% if order.scheme == 'Free Delivery' %}bg-emerald-900/40 text-emerald-300{% elif order.scheme == 'Pack Offer' %}bg-amber-900/40 text-amber-300{% endif %}">{{ order.scheme }}</span>{% else %}<span class="text-muted/50">-</span>{% endif %}</td>
+                            <td class="p-3 text-sm text-muted">{{ format_datetime(order.order_date) }}</td>
+                            <td class="p-3">
+                                <div class="flex gap-2 flex-wrap">
+                                    <a href="https://wa.me/92{{ order.phone_number.lstrip('0') }}?text=Hi%20{{ order.customer_name }}!%20Your%20order%20%23{{ order.id }}%20is%20confirmed.%20We'll%20deliver%20to%20{{ order.delivery_address }}%2C%20{{ order.city }}" target="_blank" class="inline-block px-3 py-1.5 text-[10px] font-bold tracking-wider uppercase rounded bg-[#25D366] text-black hover:opacity-80 transition-opacity">&#128172; Chat</a>
+                                    <form method="POST" class="inline" onsubmit="return confirm('Mark order #{{ order.id }} as complete?');">
+                                        <input type="hidden" name="action" value="mark_complete">
+                                        <input type="hidden" name="order_id" value="{{ order.id }}">
+                                        <button type="submit" class="inline-block px-3 py-1.5 text-[10px] font-bold tracking-wider uppercase rounded bg-emerald-600 text-white hover:bg-emerald-500 transition-colors">&#10003; Complete</button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
+            </div>
             {% else %}
-                <div class="empty-state">No pending orders at the moment</div>
+            <div class="text-center py-16 text-muted text-sm">No pending orders at the moment</div>
             {% endif %}
         </div>
 
-        <!-- TAB 2: Manage Store Inventory -->
+        <!-- TAB 2: Completed Orders -->
+        <div id="completed" class="tab-content">
+            <div class="flex items-center gap-2 mb-5 pb-3 border-b border-border">
+                <span class="text-lg">&#10003;</span>
+                <h2 class="text-base font-semibold tracking-wider">Completed Orders History</h2>
+            </div>
+            {% if completed_orders %}
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-card text-muted text-[10px] tracking-wider uppercase">
+                            <th class="p-3 font-semibold border-b border-border">Orig ID</th>
+                            <th class="p-3 font-semibold border-b border-border">Product</th>
+                            <th class="p-3 font-semibold border-b border-border">Customer</th>
+                            <th class="p-3 font-semibold border-b border-border">WhatsApp</th>
+                            <th class="p-3 font-semibold border-b border-border">Address</th>
+                             <th class="p-3 font-semibold border-b border-border">City</th>
+                            <th class="p-3 font-semibold border-b border-border">Deal/Scheme</th>
+                            <th class="p-3 font-semibold border-b border-border">Order Date</th>
+                            <th class="p-3 font-semibold border-b border-border">Completed At</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for co in completed_orders %}
+                        <tr class="border-b border-border hover:bg-card/50 transition-colors">
+                            <td class="p-3 text-sm font-semibold">#{{ co.order_id }}</td>
+                            <td class="p-3 text-sm">{{ co.product_id_or_name }}</td>
+                            <td class="p-3 text-sm">{{ co.customer_name }}</td>
+                            <td class="p-3 text-sm">{{ co.phone_number }}</td>
+                            <td class="p-3 text-sm max-w-[150px] truncate">{{ co.delivery_address }}</td>
+                            <td class="p-3 text-sm">{{ co.city }}</td>
+                            <td class="p-3 text-sm">{% if co.scheme and co.scheme != 'None' %}<span class="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded {% if co.scheme == 'Free Delivery' %}bg-emerald-900/40 text-emerald-300{% elif co.scheme == 'Pack Offer' %}bg-amber-900/40 text-amber-300{% endif %}">{{ co.scheme }}</span>{% else %}<span class="text-muted/50">-</span>{% endif %}</td>
+                            <td class="p-3 text-sm text-muted">{{ format_datetime(co.order_date) }}</td>
+                            <td class="p-3 text-sm text-muted">{{ format_datetime(co.completed_at) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-16 text-muted text-sm">No completed orders yet</div>
+            {% endif %}
+        </div>
+
+        <!-- TAB 3: Inventory -->
         <div id="inventory" class="tab-content">
-            <div class="section-header">
-                <span>📦</span>
-                <h2>Manage Store Inventory</h2>
+            <div class="flex items-center gap-2 mb-5 pb-3 border-b border-border">
+                <span class="text-lg">&#128230;</span>
+                <h2 class="text-base font-semibold tracking-wider">Manage Store Inventory</h2>
             </div>
             {% if products %}
-                <table>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
                     <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Product Title</th>
-                            <th>Size</th>
-                            <th>Price</th>
-                            <th>Original Price</th>
-                            <th>Location Code</th>
-                            <th>Shipping</th>
-                            <th>Stock</th>
-                            <th>Action</th>
+                        <tr class="bg-card text-muted text-[10px] tracking-wider uppercase">
+                            <th class="p-3 font-semibold border-b border-border">ID</th>
+                            <th class="p-3 font-semibold border-b border-border">Title</th>
+                            <th class="p-3 font-semibold border-b border-border">Size</th>
+                            <th class="p-3 font-semibold border-b border-border">Price</th>
+                            <th class="p-3 font-semibold border-b border-border">Orig. Price</th>
+                            <th class="p-3 font-semibold border-b border-border">Code</th>
+                            <th class="p-3 font-semibold border-b border-border">Shipping</th>
+                            <th class="p-3 font-semibold border-b border-border">Stock</th>
+                            <th class="p-3 font-semibold border-b border-border">Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for product in products %}
-                        <tr>
-                            <td>{{ product.id }}</td>
-                            <td>{{ product.title }}</td>
-                            <td>{{ product.size }}</td>
-                            <td>PKR {{ product.price }}</td>
-                            <td>{% if product.original_price %}PKR {{ product.original_price }}{% else %}-{% endif %}</td>
-                            <td>{{ product.code or '-' }}</td>
-                            <td>
-                                {% if 'Free' in product.shipping_rule %}
-                                    <span class="badge badge-free">Free</span>
-                                {% else %}
-                                    <span class="badge badge-paid">Paid</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if product.stock == 0 %}
-                                    <span class="badge badge-sold-out">🔴 Sold Out</span>
-                                {% else %}
-                                    {{ product.stock }}
-                                {% endif %}
-                            </td>
-                            <td>
-                                <button type="button" class="btn btn-edit" onclick="openEditModal({{ product.id }}, '{{ product.title }}', '{{ product.size }}', {{ product.price }}, {{ product.original_price or 0 }}, '{{ product.code or '' }}', {{ product.condition_rating or 9.0 }}, {{ product.stock }})">✏️ Edit</button>
-                                <form method="POST" style="display: inline;" onsubmit="return confirm('Delete this product?');">
-                                    <input type="hidden" name="action" value="delete_product">
-                                    <input type="hidden" name="product_id" value="{{ product.id }}">
-                                    <button type="submit" class="btn btn-delete">🗑 Delete</button>
-                                </form>
+                        <tr class="border-b border-border hover:bg-card/50 transition-colors">
+                            <td class="p-3 text-sm">{{ product.id }}</td>
+                            <td class="p-3 text-sm font-semibold">{{ product.title }}</td>
+                            <td class="p-3 text-sm">{{ product.size }}</td>
+                            <td class="p-3 text-sm">PKR {{ product.price }}</td>
+                            <td class="p-3 text-sm text-muted">{% if product.original_price %}PKR {{ product.original_price }}{% else %}-{% endif %}</td>
+                            <td class="p-3 text-sm text-muted">{{ product.code or '-' }}</td>
+                            <td class="p-3 text-sm">{% if 'Free' in product.shipping_rule %}<span class="text-[10px] font-bold tracking-wider uppercase bg-emerald-900/40 text-emerald-300 px-2 py-0.5 rounded">Free</span>{% else %}<span class="text-[10px] font-bold tracking-wider uppercase bg-yellow-900/40 text-yellow-300 px-2 py-0.5 rounded">Paid</span>{% endif %}</td>
+                            <td class="p-3 text-sm">{% if product.stock == 0 %}<span class="text-[10px] font-bold tracking-wider uppercase bg-red-900/40 text-red-300 px-2 py-0.5 rounded">Sold Out</span>{% else %}{{ product.stock }}{% endif %}</td>
+                            <td class="p-3">
+                                <div class="flex gap-1.5">
+                                    <button class="px-2.5 py-1.5 text-[10px] font-bold tracking-wider uppercase rounded bg-amber-600 text-white hover:bg-amber-500 transition-colors" onclick="openEditModal('{{ product.id }}','{{ product.title }}','{{ product.size }}',{{ product.price }},{{ product.original_price or 0 }},'{{ product.code or '' }}',{{ product.condition_rating or 9.0 }},{{ product.stock }})">Edit</button>
+                                    <form method="POST" class="inline" onsubmit="return confirm('Delete product {{ product.id }} - {{ product.title }}?');">
+                                        <input type="hidden" name="action" value="delete_product">
+                                        <input type="hidden" name="product_id" value="{{ product.id }}">
+                                        <button type="submit" class="px-2.5 py-1.5 text-[10px] font-bold tracking-wider uppercase rounded bg-red-700 text-white hover:bg-red-600 transition-colors">Delete</button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
+            </div>
             {% else %}
-                <div class="empty-state">No products in inventory</div>
+            <div class="text-center py-16 text-muted text-sm">No products in inventory</div>
             {% endif %}
         </div>
 
-        <!-- TAB 3: Add New Product -->
+        <!-- TAB 4: Add Product -->
         <div id="add" class="tab-content">
-            <div class="section-header">
-                <span>➕</span>
-                <h2>Add New Product</h2>
+            <div class="flex items-center gap-2 mb-5 pb-3 border-b border-border">
+                <span class="text-lg">&#10133;</span>
+                <h2 class="text-base font-semibold tracking-wider">Add New Product</h2>
             </div>
 
-            <form method="POST" class="form-container" enctype="multipart/form-data">
+            <form method="POST" enctype="multipart/form-data" class="max-w-2xl space-y-6">
                 <input type="hidden" name="action" value="add_product">
 
-                <!-- Basic Product Information -->
-                <div class="form-card">
-                    <div class="form-card-header">
-                        <span>📝</span>
-                        <h3>Basic Product Information</h3>
+                <!-- Basic Info -->
+                <div class="bg-card border border-border rounded-xl p-5 space-y-4">
+                    <div class="flex items-center gap-2 pb-3 border-b border-border">
+                        <span>&#128221;</span>
+                        <h3 class="text-sm font-semibold tracking-wider">Basic Product Information</h3>
                     </div>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label for="title">Product Title *</label>
-                            <input type="text" id="title" name="title" required placeholder="e.g., Nike Air Max 90">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Product ID *</label>
+                            <input type="text" name="product_id" required placeholder="e.g., PROD_001" class="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white placeholder-muted/40 outline-none focus:border-white transition-colors">
                         </div>
-
-                        <div class="form-group">
-                            <label for="size">Size *</label>
-                            <input type="text" id="size" name="size" required placeholder="e.g., 42">
+                        <div>
+                            <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Title *</label>
+                            <input type="text" name="title" required placeholder="e.g., Nike Air Max 90" class="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white placeholder-muted/40 outline-none focus:border-white transition-colors">
                         </div>
-
-                        <div class="form-group">
-                            <label for="code">Location Code</label>
-                            <input type="text" id="code" name="code" placeholder="SHERSHAH-A12 or BHORA-B05">
-                            <div class="helper-text">Physical location in warehouse</div>
+                        <div>
+                            <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Size *</label>
+                            <input type="text" name="size" required placeholder="e.g., 42" class="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white placeholder-muted/40 outline-none focus:border-white transition-colors">
                         </div>
-
-                        <div class="form-group">
-                            <label for="condition_rating">Condition Rating (1-10)</label>
-                            <input type="number" id="condition_rating" name="condition_rating" value="9" min="1" max="10" step="0.1">
+                        <div>
+                            <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Location Code</label>
+                            <input type="text" name="code" placeholder="SHERSHAH-A12" class="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white placeholder-muted/40 outline-none focus:border-white transition-colors">
                         </div>
-
-                        <div class="form-group full-width">
-                            <label>Product Image</label>
-                            <div class="upload-area" id="uploadArea" onclick="document.getElementById('imageFile').click()">
-                                <div class="upload-icon">📸</div>
-                                <div class="upload-text">Click to upload or drag & drop</div>
-                                <div class="upload-hint">PNG, JPG, WEBP up to 16MB</div>
-                                <div class="file-name-display" id="fileNameDisplay"></div>
-                            </div>
-                            <input type="file" id="imageFile" name="image_file" accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
-                            <div class="helper-text" style="margin-top: 10px;">Or enter image URL below:</div>
-                            <input type="url" id="image_url" name="image_url" placeholder="https://example.com/shoe.jpg" style="margin-top: 8px;">
+                        <div>
+                            <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Price (PKR) *</label>
+                            <input type="number" name="price" required placeholder="Sale Price" step="0.01" class="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white placeholder-muted/40 outline-none focus:border-white transition-colors">
                         </div>
-                    </div>
-                </div>
-
-                <!-- Sales & Marketing Rules -->
-                <div class="form-card">
-                    <div class="form-card-header">
-                        <span>🔥</span>
-                        <h3>Sales & Marketing Rules</h3>
-                    </div>
-
-                    <!-- Discount & Price Tags -->
-                    <div class="form-group" style="margin-bottom: 25px;">
-                        <label>Discount & Price Tags</label>
-                        <div class="discount-calculator">
-                            <div class="form-group" style="margin: 0;">
-                                <input type="number" id="original_price" name="original_price" placeholder="Original Price (PKR)" oninput="calculateDiscount()">
-                            </div>
-                            <div class="form-group" style="margin: 0;">
-                                <input type="number" id="price" name="price" required placeholder="Sale Price (PKR) *" oninput="calculateDiscount()">
-                            </div>
-                            <div id="discountBadge" class="discount-badge">0% OFF</div>
+                        <div>
+                            <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Original Price (PKR)</label>
+                            <input type="number" name="original_price" placeholder="Original Price" step="0.01" class="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white placeholder-muted/40 outline-none focus:border-white transition-colors">
                         </div>
-                        <div class="helper-text">Enter both prices to auto-calculate discount percentage</div>
-                    </div>
-
-                    <!-- Time-Limited Sales -->
-                    <div class="form-group" style="margin-bottom: 25px;">
-                        <label>Time-Limited Sales (Countdown Scheduler)</label>
-                        <div style="display: grid; grid-template-columns: auto 1fr; gap: 15px; align-items: center;">
-                            <div class="checkbox-group" style="margin: 0;">
-                                <input type="checkbox" id="is_sale" name="is_sale" value="1" onchange="toggleSaleTime()">
-                                <label for="is_sale">Enable Sale Countdown</label>
-                            </div>
-                            <input type="datetime-local" id="sale_end_time" name="sale_end_time" disabled>
+                        <div>
+                            <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Condition Rating (1-10)</label>
+                            <input type="number" name="condition_rating" value="9" min="1" max="10" step="0.1" class="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white placeholder-muted/40 outline-none focus:border-white transition-colors">
                         </div>
-                        <div class="helper-text">Creates urgency with live countdown timer on storefront</div>
-                    </div>
-
-                    <!-- Marketing Toggles -->
-                    <div class="form-group">
-                        <label>Marketing Toggles</label>
-                        <div class="marketing-toggles">
-                            <div class="checkbox-group">
-                                <input type="checkbox" id="free_shipping" name="free_shipping" value="1">
-                                <label for="free_shipping">✅ Enable Free Shipping Rule for this product</label>
-                            </div>
-                            <div class="checkbox-group">
-                                <input type="checkbox" id="bundle_pack_toggle" name="bundle_pack_toggle" value="1" onchange="toggleBundlePack()">
-                                <label for="bundle_pack_toggle">📦 Set as "Bundle Pack Offer"</label>
-                            </div>
-                            <div class="checkbox-group">
-                                <input type="checkbox" id="imported_premium" name="imported_premium" value="1">
-                                <label for="imported_premium">⭐ Tag as "Imported Premium Stock"</label>
-                            </div>
+                        <div>
+                            <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Stock</label>
+                            <input type="number" name="stock" value="1" min="0" class="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white placeholder-muted/40 outline-none focus:border-white transition-colors">
                         </div>
                     </div>
-
-                    <!-- Bundle Pack Details -->
-                    <div class="form-group" id="bundlePackDetails" style="display: none; margin-top: 15px;">
-                        <label for="bundle_pack">Bundle Pack Details</label>
-                        <input type="text" id="bundle_pack" name="bundle_pack" placeholder="e.g., Buy 2 Get 1 Free or Pack of 2 for PKR 8000">
-                        <div class="helper-text">Describe the bundle offer clearly</div>
+                    <div>
+                        <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Product Photo * <span class="text-muted/60 font-normal normal-case tracking-normal">(Click to upload)</span></label>
+                        <div class="relative">
+                            <input type="file" name="image_file" accept="image/*" required class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                            <div class="bg-surface border-2 border-dashed border-border rounded-lg px-5 py-6 text-center hover:border-white transition-colors">
+                                <svg class="w-8 h-8 mx-auto text-muted/60 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                <span id="file-name" class="text-sm text-muted">Tap to select photo from gallery</span>
+                            </div>
+                        </div>
+                        <div id="file-preview" class="hidden mt-3 relative w-24 h-24 rounded-lg overflow-hidden border border-border">
+                            <img id="preview-img" class="w-full h-full object-cover">
+                            <button type="button" onclick="this.parentElement.classList.add('hidden');document.querySelector('input[name=image_file]').value='';document.getElementById('file-name').textContent='Tap to select photo from gallery'" class="absolute top-1 right-1 w-5 h-5 bg-red-600 text-white rounded-full text-xs leading-none">&times;</button>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Submit Button -->
-                <div class="form-group full-width">
-                    <button type="submit" class="btn-submit">🚀 Add Product to Store</button>
+                <!-- Marketing -->
+                <div class="bg-card border border-border rounded-xl p-5 space-y-4">
+                    <div class="flex items-center gap-2 pb-3 border-b border-border">
+                        <span>&#128293;</span>
+                        <h3 class="text-sm font-semibold tracking-wider">Sales & Marketing</h3>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <input type="checkbox" id="is_sale" name="is_sale" value="1" class="w-4 h-4 accent-white">
+                        <label for="is_sale" class="text-sm text-muted">Enable Sale Countdown</label>
+                    </div>
+                    <div>
+                        <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Sale End Time</label>
+                        <input type="datetime-local" name="sale_end_time" class="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white outline-none focus:border-white transition-colors">
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <input type="checkbox" id="free_shipping" name="free_shipping" value="1" class="w-4 h-4 accent-white">
+                        <label for="free_shipping" class="text-sm text-muted">Enable Free Shipping</label>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <input type="checkbox" id="imported_premium" name="imported_premium" value="1" class="w-4 h-4 accent-white">
+                        <label for="imported_premium" class="text-sm text-muted">Tag as Imported Premium Stock</label>
+                    </div>
                 </div>
+
+                <button type="submit" class="w-full bg-white text-black text-xs font-bold tracking-[2px] uppercase py-4 rounded-lg hover:bg-neutral-200 transition-all">Add Product to Store</button>
             </form>
         </div>
     </div>
 
-    <!-- Edit Product Modal -->
-    <div id="editModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>✏️ Edit Product</h3>
-                <button type="button" class="modal-close" onclick="closeEditModal()">&times;</button>
+    <!-- Edit Modal -->
+    <div id="editModal" class="fixed inset-0 bg-black/80 z-50 hidden items-center justify-center p-4" onclick="if(event.target===this)closeEditModal()">
+        <div class="bg-card border border-border rounded-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between p-5 border-b border-border">
+                <h3 class="text-sm font-semibold tracking-wider">Edit Product</h3>
+                <button onclick="closeEditModal()" class="text-muted hover:text-white text-xl leading-none">&times;</button>
             </div>
-            <div class="modal-body">
-                <form method="POST">
-                    <input type="hidden" name="action" value="edit_product">
-                    <input type="hidden" name="product_id" id="edit_product_id">
-
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label for="edit_title">Product Title *</label>
-                            <input type="text" id="edit_title" name="title" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="edit_size">Size *</label>
-                            <input type="text" id="edit_size" name="size" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="edit_price">Price (PKR) *</label>
-                            <input type="number" id="edit_price" name="price" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="edit_original_price">Original Price (PKR)</label>
-                            <input type="number" id="edit_original_price" name="original_price">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="edit_code">Location Code</label>
-                            <input type="text" id="edit_code" name="code">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="edit_condition_rating">Condition Rating</label>
-                            <input type="number" id="edit_condition_rating" name="condition_rating" min="1" max="10" step="0.1">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="edit_stock">Stock Quantity *</label>
-                            <input type="number" id="edit_stock" name="stock" min="0" required>
-                            <div class="helper-text">Set to 0 to mark as Sold Out</div>
-                        </div>
-
-                        <div class="form-group full-width">
-                            <button type="submit" class="btn-submit">Update Product</button>
-                        </div>
+            <form method="POST" class="p-5 space-y-4">
+                <input type="hidden" name="action" value="edit_product">
+                <input type="hidden" name="product_id" id="edit_product_id">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Title *</label>
+                        <input type="text" id="edit_title" name="title" required class="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white outline-none focus:border-white">
                     </div>
-                </form>
-            </div>
+                    <div>
+                        <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Size *</label>
+                        <input type="text" id="edit_size" name="size" required class="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white outline-none focus:border-white">
+                    </div>
+                    <div>
+                        <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Price (PKR) *</label>
+                        <input type="number" id="edit_price" name="price" required step="0.01" class="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white outline-none focus:border-white">
+                    </div>
+                    <div>
+                        <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Original Price</label>
+                        <input type="number" id="edit_original_price" name="original_price" step="0.01" class="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white outline-none focus:border-white">
+                    </div>
+                    <div>
+                        <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Location Code</label>
+                        <input type="text" id="edit_code" name="code" class="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white outline-none focus:border-white">
+                    </div>
+                    <div>
+                        <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Condition Rating</label>
+                        <input type="number" id="edit_condition_rating" name="condition_rating" min="1" max="10" step="0.1" class="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white outline-none focus:border-white">
+                    </div>
+                    <div>
+                        <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Stock *</label>
+                        <input type="number" id="edit_stock" name="stock" min="0" required class="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white outline-none focus:border-white">
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-white text-black text-xs font-bold tracking-[2px] uppercase py-4 rounded-lg hover:bg-neutral-200 transition-all">Update Product</button>
+            </form>
         </div>
     </div>
 
     <script>
-        function switchTab(event, tabId) {
-            // Hide all tab contents
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.remove('active');
-            });
-
-            // Remove active class from all buttons
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-
-            // Show selected tab and mark button as active
-            document.getElementById(tabId).classList.add('active');
-            event.currentTarget.classList.add('active');
-        }
-
-        function calculateDiscount() {
-            const originalPrice = parseFloat(document.getElementById('original_price').value) || 0;
-            const salePrice = parseFloat(document.getElementById('price').value) || 0;
-            const badge = document.getElementById('discountBadge');
-
-            if (originalPrice > 0 && salePrice > 0 && originalPrice > salePrice) {
-                const discount = Math.round(((originalPrice - salePrice) / originalPrice) * 100);
-                badge.textContent = discount + '% OFF';
-                badge.classList.add('active');
-            } else {
-                badge.classList.remove('active');
-            }
-        }
-
-        function toggleSaleTime() {
-            const checkbox = document.getElementById('is_sale');
-            const dateInput = document.getElementById('sale_end_time');
-            dateInput.disabled = !checkbox.checked;
-            if (!checkbox.checked) {
-                dateInput.value = '';
-            }
-        }
-
-        function toggleBundlePack() {
-            const checkbox = document.getElementById('bundle_pack_toggle');
-            const details = document.getElementById('bundlePackDetails');
-            details.style.display = checkbox.checked ? 'block' : 'none';
-            if (!checkbox.checked) {
-                document.getElementById('bundle_pack').value = '';
-            }
-        }
-
-        // Drag & Drop Functionality
-        const uploadArea = document.getElementById('uploadArea');
-        const fileInput = document.getElementById('imageFile');
-        const fileNameDisplay = document.getElementById('fileNameDisplay');
-
-        // Prevent default drag behaviors
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            uploadArea.addEventListener(eventName, preventDefaults, false);
-            document.body.addEventListener(eventName, preventDefaults, false);
-        });
-
-        function preventDefaults(e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-
-        // Highlight drop area when dragging over it
-        ['dragenter', 'dragover'].forEach(eventName => {
-            uploadArea.addEventListener(eventName, () => {
-                uploadArea.classList.add('dragover');
-            }, false);
-        });
-
-        ['dragleave', 'drop'].forEach(eventName => {
-            uploadArea.addEventListener(eventName, () => {
-                uploadArea.classList.remove('dragover');
-            }, false);
-        });
-
-        // Handle dropped files
-        uploadArea.addEventListener('drop', (e) => {
-            const dt = e.dataTransfer;
-            const files = dt.files;
-            if (files.length > 0) {
-                fileInput.files = files;
-                handleFileSelect({ target: fileInput });
-            }
-        });
-
-        function handleFileSelect(event) {
-            const file = event.target.files[0];
+        document.querySelector('input[name="image_file"]').addEventListener('change', function(e) {
+            const file = e.target.files[0];
             if (file) {
-                fileNameDisplay.textContent = '✓ ' + file.name;
-                fileNameDisplay.classList.add('active');
-                // Clear URL input if file is selected
-                document.getElementById('image_url').value = '';
+                document.getElementById('file-name').textContent = file.name;
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    const preview = document.getElementById('preview-img');
+                    preview.src = ev.target.result;
+                    document.getElementById('file-preview').classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
             }
+        });
+        function switchTab(event, tabId) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => {
+                b.classList.remove('text-white', 'border-white');
+                b.classList.add('text-muted', 'border-transparent');
+            });
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.remove('text-muted', 'border-transparent');
+            event.currentTarget.classList.add('text-white', 'border-white');
         }
-
-        // Edit Modal Functions
         function openEditModal(id, title, size, price, originalPrice, code, conditionRating, stock) {
             document.getElementById('edit_product_id').value = id;
             document.getElementById('edit_title').value = title;
@@ -888,19 +372,13 @@
             document.getElementById('edit_code').value = code;
             document.getElementById('edit_condition_rating').value = conditionRating;
             document.getElementById('edit_stock').value = stock;
-            document.getElementById('editModal').classList.add('active');
+            document.getElementById('editModal').classList.remove('hidden');
+            document.getElementById('editModal').classList.add('flex');
         }
-
         function closeEditModal() {
-            document.getElementById('editModal').classList.remove('active');
+            document.getElementById('editModal').classList.add('hidden');
+            document.getElementById('editModal').classList.remove('flex');
         }
-
-        // Close modal when clicking outside
-        document.getElementById('editModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeEditModal();
-            }
-        });
     </script>
 </body>
 </html>

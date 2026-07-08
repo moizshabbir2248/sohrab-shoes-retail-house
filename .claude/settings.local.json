@@ -12,7 +12,9 @@
       "Bash(sqlite3 shoes.db \"SELECT id, title, is_sale, sale_end_time FROM products LIMIT 5;\")",
       "Bash(curl -s http://127.0.0.1:5000/)",
       "Bash(grep -E \"\\\\.html$\")",
-      "Bash(grep -E \"\\\\.\\(txt|md|log|tmp|bak\\)$|^test|^old_\")"
+      "Bash(grep -E \"\\\\.\\(txt|md|log|tmp|bak\\)$|^test|^old_\")",
+      "Bash(pip list *)",
+      "Bash(pip install *)"
     ]
   }
 }

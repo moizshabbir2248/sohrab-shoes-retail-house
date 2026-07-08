@@ -1,0 +1,495 @@
+import os
+from datetime import datetime
+from dotenv import load_dotenv
+import psycopg2
+
+load_dotenv()
+
+NEON_DB_URL = os.getenv('NEON_DB_URL')
+
+def get_connection():
+    return psycopg2.connect(NEON_DB_URL, connect_timeout=10)
+
+# ==================== PRODUCTS TABLE ====================
+
+def init_products_table():
+    conn = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS products (
+                product_id VARCHAR(50) PRIMARY KEY,
+                title VARCHAR(255) NOT NULL,
+                price NUMERIC(10, 2) NOT NULL,
+                size VARCHAR(20) NOT NULL,
+                image_url TEXT,
+                original_price NUMERIC(10, 2),
+                stock INTEGER DEFAULT 1,
+                code VARCHAR(50),
+                condition_rating NUMERIC(3, 1) DEFAULT 9.0,
+                is_sale INTEGER DEFAULT 0,
+                sale_end_time TIMESTAMP,
+                shipping_rule VARCHAR(100) DEFAULT 'Standard Shipping Applies',
+                imported_premium INTEGER DEFAULT 0,
+                brand VARCHAR(100),
+                description TEXT,
+                color VARCHAR(50),
+                category VARCHAR(100),
+                condition VARCHAR(100),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        conn.commit()
+        cursor.close()
+        return True
+    except Exception as e:
+        print(f"[ERROR] init_products_table: {e}")
+        if conn:
+            conn.rollback()
+        return False
+    finally:
+        if conn:
+            conn.close()
+
+def _row_to_product(row):
+    if not row:
+        return None
+    return {
+        'id': row[0],
+        'product_id': row[0],
+        'name': row[1],
+        'title': row[1],
+        'price': float(row[2]),
+        'size': row[3],
+        'image_url': row[4],
+        'original_price': float(row[5]) if row[5] else None,
+        'stock': row[6],
+        'code': row[7],
+        'condition_rating': float(row[8]) if row[8] else 9.0,
+        'is_sale': row[9],
+        'sale_end_time': row[10].isoformat() if row[10] else None,
+        'shipping_rule': row[11],
+        'imported_premium': row[12],
+        'brand': row[13],
+        'description': row[14],
+        'color': row[15],
+        'category': row[16],
+        'condition': row[17],
+        'created_at': row[18].isoformat() if row[18] else None
+    }
+
+def get_all_products_db():
+    conn = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM products WHERE stock > 0 ORDER BY created_at DESC")
+        rows = cursor.fetchall()
+        cursor.close()
+        return [_row_to_product(r) for r in rows]
+    except Exception as e:
+        print(f"[ERROR] get_all_products_db: {e}")
+        return []
+    finally:
+        if conn:
+            conn.close()
+
+def get_product_by_id_db(product_id):
+    conn = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM products WHERE product_id = %s", (product_id,))
+        row = cursor.fetchone()
+        cursor.close()
+        return _row_to_product(row)
+    except Exception as e:
+        print(f"[ERROR] get_product_by_id_db: {e}")
+        return None
+    finally:
+        if conn:
+            conn.close()
+
+def add_product_to_db(data):
+    conn = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO products
+            (product_id, title, price, size, image_url, original_price, stock,
+             code, condition_rating, is_sale, sale_end_time, shipping_rule,
+             imported_premium, brand, description, color, category, condition)
+            VALUES (%(product_id)s, %(title)s, %(price)s, %(size)s, %(image_url)s,
+                    %(original_price)s, %(stock)s, %(code)s, %(condition_rating)s,
+                    %(is_sale)s, %(sale_end_time)s, %(shipping_rule)s,
+                    %(imported_premium)s, %(brand)s, %(description)s, %(color)s,
+                    %(category)s, %(condition)s)
+        """, data)
+        conn.commit()
+        cursor.close()
+        return True
+    except Exception as e:
+        print(f"[ERROR] add_product_to_db: {e}")
+        if conn:
+            conn.rollback()
+        return False
+    finally:
+        if conn:
+            conn.close()
+
+def update_product_in_db(product_id, data):
+    conn = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            UPDATE products SET
+                title = %(title)s, price = %(price)s, size = %(size)s,
+                original_price = %(original_price)s, stock = %(stock)s,
+                code = %(code)s, condition_rating = %(condition_rating)s
+            WHERE product_id = %(product_id)s
+        """, {**data, 'product_id': product_id})
+        conn.commit()
+        cursor.close()
+        return True
+    except Exception as e:
+        print(f"[ERROR] update_product_in_db: {e}")
+        if conn:
+            conn.rollback()
+        return False
+    finally:
+        if conn:
+            conn.close()
+
+def delete_product_from_db(product_id):
+    conn = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM products WHERE product_id = %s", (product_id,))
+        conn.commit()
+        cursor.close()
+        return True
+    except Exception as e:
+        print(f"[ERROR] delete_product_from_db: {e}")
+        if conn:
+            conn.rollback()
+        return False
+    finally:
+        if conn:
+            conn.close()
+
+def search_products_db(query):
+    conn = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        q = f"%{query}%"
+        cursor.execute("""
+            SELECT * FROM products
+            WHERE stock > 0 AND (title ILIKE %s OR brand ILIKE %s OR description ILIKE %s)
+            ORDER BY created_at DESC
+        """, (q, q, q))
+        rows = cursor.fetchall()
+        cursor.close()
+        return [_row_to_product(r) for r in rows]
+    except Exception as e:
+        print(f"[ERROR] search_products_db: {e}")
+        return []
+    finally:
+        if conn:
+            conn.close()
+
+def filter_products_by_size_db(size):
+    conn = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM products WHERE size = %s AND stock > 0 ORDER BY created_at DESC", (size,))
+        rows = cursor.fetchall()
+        cursor.close()
+        return [_row_to_product(r) for r in rows]
+    except Exception as e:
+        print(f"[ERROR] filter_products_by_size_db: {e}")
+        return []
+    finally:
+        if conn:
+            conn.close()
+
+def reduce_stock_db(product_id, quantity=1):
+    conn = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE products SET stock = GREATEST(stock - %s, 0) WHERE product_id = %s", (quantity, product_id))
+        conn.commit()
+        cursor.close()
+        return True
+    except Exception as e:
+        print(f"[ERROR] reduce_stock_db: {e}")
+        if conn:
+            conn.rollback()
+        return False
+    finally:
+        if conn:
+            conn.close()
+
+# ==================== ORDERS TABLE ====================
+
+def init_orders_table():
+    conn = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS orders (
+                id SERIAL PRIMARY KEY,
+                customer_name VARCHAR(255) NOT NULL,
+                phone_number VARCHAR(20) NOT NULL,
+                delivery_address TEXT NOT NULL,
+                city VARCHAR(100),
+                product_id_or_name VARCHAR(255) NOT NULL,
+                quantity INTEGER DEFAULT 1,
+                total_price NUMERIC(10, 2) NOT NULL,
+                order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                status VARCHAR(20) DEFAULT 'pending',
+                notes TEXT,
+                scheme VARCHAR(50) DEFAULT 'None'
+            )
+        """)
+        cursor.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS scheme VARCHAR(50) DEFAULT 'None'")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_orders_date ON orders(order_date DESC)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status)")
+        conn.commit()
+        cursor.close()
+        return True
+    except Exception as e:
+        print(f"[ERROR] init_orders_table: {e}")
+        if conn:
+            conn.rollback()
+        return False
+    finally:
+        if conn:
+            conn.close()
+
+def _row_to_order(row):
+    if not row:
+        return None
+    return {
+        'id': row[0],
+        'customer_name': row[1],
+        'phone_number': row[2],
+        'delivery_address': row[3],
+        'city': row[4],
+        'product_id_or_name': row[5],
+        'quantity': row[6],
+        'total_price': float(row[7]),
+        'order_date': row[8],
+        'status': row[9],
+        'notes': row[10],
+        'scheme': row[11] if len(row) > 11 else 'None'
+    }
+
+def create_order(customer_name, phone_number, delivery_address, city,
+                 product_id_or_name, quantity, total_price, notes=None, scheme='None'):
+    conn = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO orders
+            (customer_name, phone_number, delivery_address, city,
+             product_id_or_name, quantity, total_price, notes, status, order_date, scheme)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'pending', %s, %s)
+            RETURNING id
+        """, (customer_name, phone_number, delivery_address, city,
+              product_id_or_name, quantity, total_price, notes, datetime.utcnow(), scheme))
+        order_id = cursor.fetchone()[0]
+        conn.commit()
+        cursor.close()
+        return order_id
+    except Exception as e:
+        print(f"[ERROR] create_order: {e}")
+        if conn:
+            conn.rollback()
+        return None
+    finally:
+        if conn:
+            conn.close()
+
+def get_order_by_id(order_id):
+    conn = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id, customer_name, phone_number, delivery_address, city,
+                   product_id_or_name, quantity, total_price, order_date,
+                   status, notes, scheme
+            FROM orders WHERE id = %s
+        """, (order_id,))
+        row = cursor.fetchone()
+        cursor.close()
+        return _row_to_order(row)
+    except Exception as e:
+        print(f"[ERROR] get_order_by_id: {e}")
+        return None
+    finally:
+        if conn:
+            conn.close()
+
+def get_all_orders(status=None):
+    conn = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        if status:
+            cursor.execute("""
+                SELECT id, customer_name, phone_number, delivery_address, city,
+                       product_id_or_name, quantity, total_price, order_date,
+                       status, notes, scheme
+                FROM orders WHERE status = %s ORDER BY order_date DESC
+            """, (status,))
+        else:
+            cursor.execute("""
+                SELECT id, customer_name, phone_number, delivery_address, city,
+                       product_id_or_name, quantity, total_price, order_date,
+                       status, notes, scheme
+                FROM orders ORDER BY order_date DESC
+            """)
+        rows = cursor.fetchall()
+        cursor.close()
+        return [_row_to_order(r) for r in rows]
+    except Exception as e:
+        print(f"[ERROR] get_all_orders: {e}")
+        return []
+    finally:
+        if conn:
+            conn.close()
+
+def update_order_status(order_id, new_status):
+    conn = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE orders SET status = %s WHERE id = %s", (new_status, order_id))
+        conn.commit()
+        cursor.close()
+        return True
+    except Exception as e:
+        print(f"[ERROR] update_order_status: {e}")
+        if conn:
+            conn.rollback()
+        return False
+    finally:
+        if conn:
+            conn.close()
+
+# ==================== COMPLETED ORDERS TABLE ====================
+
+def init_completed_orders_table():
+    conn = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS completed_orders (
+                id SERIAL PRIMARY KEY,
+                order_id INTEGER NOT NULL,
+                customer_name VARCHAR(255) NOT NULL,
+                phone_number VARCHAR(20) NOT NULL,
+                delivery_address TEXT NOT NULL,
+                city VARCHAR(100),
+                product_id_or_name VARCHAR(255) NOT NULL,
+                quantity INTEGER DEFAULT 1,
+                total_price NUMERIC(10, 2) NOT NULL,
+                order_date TIMESTAMP,
+                completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                notes TEXT,
+                scheme VARCHAR(50) DEFAULT 'None'
+            )
+        """)
+        cursor.execute("ALTER TABLE completed_orders ADD COLUMN IF NOT EXISTS scheme VARCHAR(50) DEFAULT 'None'")
+        conn.commit()
+        cursor.close()
+        return True
+    except Exception as e:
+        print(f"[ERROR] init_completed_orders_table: {e}")
+        if conn:
+            conn.rollback()
+        return False
+    finally:
+        if conn:
+            conn.close()
+
+def mark_order_complete(order_id):
+    conn = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id, customer_name, phone_number, delivery_address, city,
+                   product_id_or_name, quantity, total_price, order_date, notes, scheme
+            FROM orders WHERE id = %s
+        """, (order_id,))
+        order = cursor.fetchone()
+        if not order:
+            return False
+        cursor.execute("""
+            INSERT INTO completed_orders
+            (order_id, customer_name, phone_number, delivery_address, city,
+             product_id_or_name, quantity, total_price, order_date, notes, scheme)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, order)
+        cursor.execute("DELETE FROM orders WHERE id = %s", (order_id,))
+        conn.commit()
+        cursor.close()
+        return True
+    except Exception as e:
+        print(f"[ERROR] mark_order_complete: {e}")
+        if conn:
+            conn.rollback()
+        return False
+    finally:
+        if conn:
+            conn.close()
+
+def get_completed_orders():
+    conn = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id, order_id, customer_name, phone_number, delivery_address,
+                   city, product_id_or_name, quantity, total_price, order_date,
+                   completed_at, notes, scheme
+            FROM completed_orders ORDER BY completed_at DESC
+        """)
+        rows = cursor.fetchall()
+        cursor.close()
+        result = []
+        for r in rows:
+            result.append({
+                'id': r[0],
+                'order_id': r[1],
+                'customer_name': r[2],
+                'phone_number': r[3],
+                'delivery_address': r[4],
+                'city': r[5],
+                'product_id_or_name': r[6],
+                'quantity': r[7],
+                'total_price': float(r[8]),
+                'order_date': r[9],
+                'completed_at': r[10],
+                'notes': r[11],
+                'scheme': r[12] if len(r) > 12 else 'None'
+            })
+        return result
+    except Exception as e:
+        print(f"[ERROR] get_completed_orders: {e}")
+        return []
+    finally:
+        if conn:
+            conn.close()

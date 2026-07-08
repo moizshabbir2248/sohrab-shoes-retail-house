@@ -4,481 +4,140 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Checkout - Cash on Delivery</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0b0b0b;
-            color: #ffffff;
-            line-height: 1.6;
-        }
-
-        /* Header */
-        .header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            background: #0b0b0b;
-            padding: 18px 20px;
-            z-index: 999;
-            border-bottom: 1px solid #222222;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .back-btn {
-            color: #ffffff;
-            font-size: 20px;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            transition: opacity 0.2s ease;
-        }
-
-        .back-btn:hover {
-            opacity: 0.7;
-        }
-
-        .header-title {
-            font-size: 14px;
-            font-weight: 600;
-            color: #ffffff;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-
-        /* Checkout Container */
-        .checkout-container {
-            margin-top: 70px;
-            padding: 20px;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-            padding-bottom: 120px;
-        }
-
-        /* Product Summary */
-        .product-summary {
-            background: #161616;
-            border-radius: 4px;
-            padding: 20px;
-            margin-bottom: 20px;
-            border: 1px solid #222222;
-        }
-
-        .summary-title {
-            font-size: 10px;
-            color: #a0a0a0;
-            margin-bottom: 15px;
-            font-weight: 600;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-        }
-
-        .summary-content {
-            display: flex;
-            gap: 15px;
-        }
-
-        .summary-image {
-            width: 80px;
-            height: 80px;
-            background: #0b0b0b;
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 32px;
-            flex-shrink: 0;
-            border: 1px solid #222222;
-        }
-
-        .summary-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 4px;
-        }
-
-        .summary-details {
-            flex: 1;
-        }
-
-        .summary-product-name {
-            font-size: 15px;
-            font-weight: 600;
-            margin-bottom: 6px;
-            color: #ffffff;
-            letter-spacing: 0.3px;
-        }
-
-        .summary-meta {
-            color: #a0a0a0;
-            font-size: 12px;
-            margin-bottom: 10px;
-            letter-spacing: 0.3px;
-        }
-
-        .summary-price {
-            color: #ffffff;
-            font-size: 20px;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-        }
-
-        .summary-note {
-            font-size: 11px;
-            color: #666666;
-            margin-top: 5px;
-            letter-spacing: 0.3px;
-        }
-
-        /* Form Section */
-        .form-section {
-            background: #161616;
-            border-radius: 4px;
-            padding: 25px 20px;
-            margin-bottom: 20px;
-            border: 1px solid #222222;
-        }
-
-        .section-header {
-            font-size: 12px;
-            font-weight: 600;
-            margin-bottom: 20px;
-            color: #ffffff;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-
-        .section-icon {
-            font-size: 16px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-label {
-            display: block;
-            color: #a0a0a0;
-            font-size: 12px;
-            font-weight: 500;
-            margin-bottom: 8px;
-            letter-spacing: 0.5px;
-        }
-
-        .form-label .required {
-            color: #ff3333;
-        }
-
-        .form-input {
-            width: 100%;
-            padding: 14px;
-            background: #0b0b0b;
-            border: 1px solid #333333;
-            border-radius: 2px;
-            color: #ffffff;
-            font-size: 14px;
-            transition: all 0.2s ease;
-            letter-spacing: 0.3px;
-        }
-
-        .form-input:focus {
-            outline: none;
-            border-color: #666666;
-            background: #0b0b0b;
-        }
-
-        .form-input::placeholder {
-            color: #555555;
-        }
-
-        textarea.form-input {
-            min-height: 100px;
-            resize: vertical;
-            font-family: inherit;
-        }
-
-        /* Flash Messages */
-        .flash-messages {
-            margin-bottom: 20px;
-        }
-
-        .flash-message {
-            padding: 15px;
-            border-radius: 4px;
-            margin-bottom: 10px;
-            font-size: 13px;
-            letter-spacing: 0.3px;
-        }
-
-        .flash-message.error {
-            background: rgba(255, 51, 51, 0.15);
-            border: 1px solid #ff3333;
-            color: #ff6666;
-        }
-
-        .flash-message.success {
-            background: rgba(34, 197, 94, 0.15);
-            border: 1px solid #22c55e;
-            color: #86efac;
-        }
-
-        /* COD Info */
-        .cod-info {
-            background: #161616;
-            border: 1px solid #222222;
-            border-radius: 4px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-
-        .cod-info-title {
-            font-size: 12px;
-            font-weight: 600;
-            margin-bottom: 12px;
-            color: #ffffff;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-
-        .cod-info-list {
-            list-style: none;
-        }
-
-        .cod-info-list li {
-            padding: 6px 0;
-            color: #a0a0a0;
-            font-size: 13px;
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
-            letter-spacing: 0.3px;
-        }
-
-        .cod-info-list li:before {
-            content: "•";
-            color: #ffffff;
-            font-weight: 700;
-            flex-shrink: 0;
-        }
-
-        /* Fixed Bottom Bar */
-        .bottom-bar {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: #0b0b0b;
-            padding: 15px 20px;
-            border-top: 1px solid #222222;
-            z-index: 998;
-        }
-
-        .submit-btn {
-            width: 100%;
-            padding: 16px;
-            background: #ffffff;
-            color: #0b0b0b;
-            border: none;
-            border-radius: 2px;
-            font-weight: 600;
-            font-size: 12px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-        }
-
-        .submit-btn:hover {
-            background: #e0e0e0;
-        }
-
-        .submit-btn:active {
-            transform: translateY(1px);
-        }
-
-        .submit-btn:disabled {
-            background: #333333;
-            color: #666666;
-            cursor: not-allowed;
-            opacity: 0.6;
-        }
-
-        /* Input Helper Text */
-        .helper-text {
-            font-size: 11px;
-            color: #666666;
-            margin-top: 5px;
-            letter-spacing: 0.3px;
-        }
-
-        /* Responsive */
-        @media (max-width: 480px) {
-            .checkout-container {
-                padding: 15px;
-            }
-
-            .product-summary,
-            .form-section,
-            .cod-info {
-                padding: 15px;
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        surface: '#0f0f0f',
+                        card: '#1a1a1a',
+                        border: '#2a2a2a',
+                        muted: '#a0a0a0',
+                        accent: '#f59e0b',
+                    },
+                    fontFamily: { sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'] },
+                }
             }
         }
-    </style>
+    </script>
+    <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');</style>
 </head>
-<body>
+<body class="bg-surface text-white font-sans antialiased pb-28">
+
     <!-- Header -->
-    <header class="header">
-        <a href="/product/{{ product.id }}" class="back-btn">←</a>
-        <h1 class="header-title">Checkout</h1>
+    <header class="fixed top-0 left-0 right-0 z-40 bg-surface/95 backdrop-blur-md border-b border-border px-4 py-3 flex items-center gap-4">
+        <a href="/product/{{ product.id }}" class="text-xl text-white hover:opacity-70 transition-opacity">&larr;</a>
+        <h1 class="text-sm font-semibold tracking-wider uppercase">Checkout</h1>
     </header>
 
-    <!-- Checkout Container -->
-    <div class="checkout-container">
+    <!-- Main -->
+    <div class="mt-[57px] px-4 pt-6 max-w-lg mx-auto">
+
         <!-- Flash Messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-            <div class="flash-messages">
+            <div class="mb-4 space-y-2">
                 {% for category, message in messages %}
-                <div class="flash-message {{ category }}">{{ message }}</div>
+                <div class="px-4 py-3 rounded text-sm {% if category == 'success' %}bg-emerald-900/40 border border-emerald-700 text-emerald-300{% else %}bg-red-900/40 border border-red-700 text-red-300{% endif %}">{{ message }}</div>
                 {% endfor %}
             </div>
             {% endif %}
         {% endwith %}
 
         <!-- Product Summary -->
-        <div class="product-summary">
-            <div class="summary-title">Your Order</div>
-            <div class="summary-content">
-                <div class="summary-image">
+        <div class="bg-card border border-border rounded-lg p-4 mb-4">
+            <div class="text-[10px] tracking-wider uppercase text-muted mb-3">Your Order</div>
+            <div class="flex gap-4">
+                <div class="w-20 h-20 bg-black rounded-lg flex items-center justify-center flex-shrink-0 border border-border overflow-hidden">
                     {% if product.image_url %}
-                    <img src="{{ product.image_url }}" alt="{{ product.name }}">
+                    <img src="{{ product.image_url }}" alt="{{ product.name }}" class="w-full h-full object-cover">
                     {% else %}
-                    👟
+                    <span class="text-3xl">👟</span>
                     {% endif %}
                 </div>
-                <div class="summary-details">
-                    <div class="summary-product-name">{{ product.name }}</div>
-                    <div class="summary-meta">
-                        Size {{ product.size }} • {{ product.condition or 'Like New' }}
-                    </div>
-                    <div class="summary-price">Rs {{ product.price|int }}</div>
-                    <div class="summary-note">+ Shipping charges</div>
+                <div class="flex-1 min-w-0">
+                    <h3 class="font-semibold text-white truncate">{{ product.name }}</h3>
+                    <p class="text-xs text-muted mt-1">Size {{ product.size }}</p>
+                    <p class="text-lg font-bold text-white mt-1">Rs {{ product.price|int }}</p>
+                    <p class="text-[11px] text-muted mt-0.5">+ Shipping charges</p>
                 </div>
             </div>
         </div>
 
-        <!-- COD Information -->
-        <div class="cod-info">
-            <div class="cod-info-title">
-                Cash on Delivery
-            </div>
-            <ul class="cod-info-list">
-                <li>Pay when you receive the shoes at your doorstep</li>
-                <li>No advance payment required</li>
-                <li>Standard shipping charges apply</li>
-                <li>We'll contact you on WhatsApp to confirm</li>
+        <!-- COD Info -->
+        <div class="bg-card border border-border rounded-lg p-4 mb-4">
+            <h3 class="text-xs font-semibold tracking-wider uppercase text-white mb-3">Cash on Delivery</h3>
+            <ul class="space-y-2">
+                <li class="text-sm text-muted flex items-start gap-2 before:content-['•'] before:text-white before:font-bold before:flex-shrink-0">Pay when you receive the shoes at your doorstep</li>
+                <li class="text-sm text-muted flex items-start gap-2 before:content-['•'] before:text-white before:font-bold before:flex-shrink-0">No advance payment required</li>
+                <li class="text-sm text-muted flex items-start gap-2 before:content-['•'] before:text-white before:font-bold before:flex-shrink-0">Standard shipping charges apply</li>
+                <li class="text-sm text-muted flex items-start gap-2 before:content-['•'] before:text-white before:font-bold before:flex-shrink-0">We'll contact you on WhatsApp to confirm</li>
             </ul>
         </div>
 
         <!-- Checkout Form -->
         <form method="POST" action="/checkout/{{ product.id }}">
-            <div class="form-section">
-                <div class="section-header">
-                    <span class="section-icon">📋</span>
-                    Delivery Details
-                </div>
+            <div class="bg-card border border-border rounded-lg p-4">
+                <h3 class="text-xs font-semibold tracking-wider uppercase text-white mb-4 flex items-center gap-2">Delivery Details</h3>
 
-                <div class="form-group">
-                    <label class="form-label">
-                        Your Name <span class="required">*</span>
-                    </label>
-                    <input
-                        type="text"
-                        name="customer_name"
-                        class="form-input"
-                        placeholder="Enter your full name"
-                        required
-                        value="{{ request.form.get('customer_name', '') }}"
-                    >
-                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Your Name <span class="text-red-400">*</span></label>
+                        <input type="text" name="customer_name" required value="{{ request.form.get('customer_name', '') }}" placeholder="Enter your full name" class="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white placeholder-muted/40 outline-none focus:border-accent transition-colors">
+                    </div>
 
-                <div class="form-group">
-                    <label class="form-label">
-                        WhatsApp Number <span class="required">*</span>
-                    </label>
-                    <input
-                        type="tel"
-                        name="whatsapp"
-                        class="form-input"
-                        placeholder="03XXXXXXXXX"
-                        required
-                        pattern="[0-9]{11}"
-                        value="{{ request.form.get('whatsapp', '') }}"
-                    >
-                    <div class="helper-text">We'll contact you on this number</div>
-                </div>
+                    <div>
+                        <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">WhatsApp Number <span class="text-red-400">*</span></label>
+                        <input type="tel" name="whatsapp" required pattern="[0-9]{11}" value="{{ request.form.get('whatsapp', '') }}" placeholder="03XXXXXXXXX" class="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white placeholder-muted/40 outline-none focus:border-accent transition-colors">
+                        <p class="text-[11px] text-muted/60 mt-1">We'll contact you on this number</p>
+                    </div>
 
-                <div class="form-group">
-                    <label class="form-label">
-                        Full Address <span class="required">*</span>
-                    </label>
-                    <textarea
-                        name="address"
-                        class="form-input"
-                        placeholder="House/Flat no., Street, Area, Landmark"
-                        required
-                    >{{ request.form.get('address', '') }}</textarea>
-                </div>
+                    <div>
+                        <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Full Address <span class="text-red-400">*</span></label>
+                        <textarea name="address" required placeholder="House/Flat no., Street, Area, Landmark" class="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white placeholder-muted/40 outline-none focus:border-accent transition-colors resize-vertical min-h-[80px]">{{ request.form.get('address', '') }}</textarea>
+                    </div>
 
-                <div class="form-group">
-                    <label class="form-label">
-                        City <span class="required">*</span>
-                    </label>
-                    <input
-                        type="text"
-                        name="city"
-                        class="form-input"
-                        placeholder="Enter your city"
-                        required
-                        value="{{ request.form.get('city', '') }}"
-                    >
-                </div>
+                    <div>
+                        <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">City <span class="text-red-400">*</span></label>
+                        <input type="text" name="city" required value="{{ request.form.get('city', '') }}" placeholder="Enter your city" class="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white placeholder-muted/40 outline-none focus:border-accent transition-colors">
+                    </div>
 
-                <div class="form-group">
-                    <label class="form-label">
-                        Additional Notes (Optional)
-                    </label>
-                    <textarea
-                        name="notes"
-                        class="form-input"
-                        placeholder="Any special instructions for delivery?"
-                    >{{ request.form.get('notes', '') }}</textarea>
+                    <div>
+                        <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Deal / Scheme <span class="text-muted/50">(Optional)</span></label>
+                        <div class="space-y-2">
+                            <label class="flex items-center gap-3 bg-surface border border-border rounded-lg px-4 py-3 cursor-pointer hover:border-accent transition-colors">
+                                <input type="radio" name="scheme" value="None" checked class="accent-white w-4 h-4">
+                                <span class="text-sm text-muted">None &mdash; Standard delivery</span>
+                            </label>
+                            <label class="flex items-center gap-3 bg-surface border border-border rounded-lg px-4 py-3 cursor-pointer hover:border-accent transition-colors">
+                                <input type="radio" name="scheme" value="Free Delivery" class="accent-white w-4 h-4">
+                                <span class="text-sm text-muted"><span class="text-emerald-400 font-semibold">Free Delivery</span> &mdash; No shipping charges</span>
+                            </label>
+                            <label class="flex items-center gap-3 bg-surface border border-border rounded-lg px-4 py-3 cursor-pointer hover:border-accent transition-colors">
+                                <input type="radio" name="scheme" value="Pack Offer" class="accent-white w-4 h-4">
+                                <span class="text-sm text-muted"><span class="text-amber-400 font-semibold">Pack Offer</span> &mdash; Combo/pack discount</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Additional Notes <span class="text-muted/50">(Optional)</span></label>
+                        <textarea name="notes" placeholder="Any special instructions for delivery?" class="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white placeholder-muted/40 outline-none focus:border-accent transition-colors resize-vertical min-h-[80px]">{{ request.form.get('notes', '') }}</textarea>
+                    </div>
                 </div>
             </div>
 
             <!-- Fixed Bottom Bar -->
-            <div class="bottom-bar">
-                <button type="submit" class="submit-btn">
-                    Place Order • Rs {{ product.price|int }}
-                </button>
+            <div class="fixed bottom-0 left-0 right-0 z-40 bg-surface/95 backdrop-blur-md border-t border-border px-4 py-3">
+                <button type="submit" class="w-full text-center bg-white text-black text-xs font-bold tracking-[2px] uppercase py-4 rounded-lg hover:bg-neutral-200 transition-all">Place Order &bull; Rs {{ product.price|int }}</button>
             </div>
         </form>
     </div>
+
+    <!-- Floating WhatsApp Button -->
+    <a href="https://wa.me/923322942248?text=Salam,%20mujhe%20shoes%20ke%20baare%20mein%20puchna%20hai" target="_blank" rel="noopener" class="fixed bottom-20 right-6 z-50 w-14 h-14 bg-[#25D366] rounded-full flex items-center justify-center shadow-lg shadow-[#25D366]/30 hover:scale-110 active:scale-95 transition-all duration-200">
+        <svg viewBox="0 0 24 24" class="w-7 h-7 fill-white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+    </a>
+
 </body>
 </html>
