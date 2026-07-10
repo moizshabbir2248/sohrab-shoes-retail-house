@@ -15,7 +15,10 @@ from api.db_config import (
     init_orders_table, create_order, get_order_by_id, get_all_orders,
     update_order_status,
 
-    init_completed_orders_table, mark_order_complete, get_completed_orders
+    init_completed_orders_table, mark_order_complete, get_completed_orders,
+
+    init_referral_codes_table, validate_referral_code, add_referral_code,
+    delete_referral_code, get_all_referral_codes, toggle_referral_code
 )
 
 app = Flask(__name__, template_folder=os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'templates'),
@@ -68,10 +71,25 @@ def checkout(product_id):
         notes = request.form.get('notes', '').strip()
         quantity = int(request.form.get('quantity', 1))
         scheme = request.form.get('scheme', 'None')
+        referral_code_input = request.form.get('referral_code', '').strip()
+
         if not all([customer_name, whatsapp, address, city]):
             flash('Please fill in all required fields.', 'error')
             return render_template('checkout.html', product=product)
+
         total_price = product['price'] * quantity
+        discount = 0
+        applied_referral = None
+
+        if referral_code_input:
+            if validate_referral_code(referral_code_input):
+                discount = 200
+                applied_referral = referral_code_input.upper()
+                total_price = max(total_price - 200, 0)
+            else:
+                flash('Invalid or inactive coupon code. No discount applied.', 'error')
+                return render_template('checkout.html', product=product)
+
         product_identifier = f"{product['id']} - {product['title']}"
         try:
             order_id = create_order(
@@ -83,11 +101,15 @@ def checkout(product_id):
                 quantity=quantity,
                 total_price=total_price,
                 notes=notes,
-                scheme=scheme
+                scheme=scheme,
+                referral_code=applied_referral
             )
             if order_id:
                 reduce_stock_db(product_id, quantity)
-                flash(f'Order placed successfully! Order ID: {order_id}', 'success')
+                if discount > 0:
+                    flash(f'Order placed! Rs {discount} discount applied. Order ID: {order_id}', 'success')
+                else:
+                    flash(f'Order placed successfully! Order ID: {order_id}', 'success')
                 return redirect(url_for('order_confirmation', order_id=order_id))
             else:
                 flash('An error occurred. Please try again.', 'error')
@@ -234,11 +256,41 @@ def moiz_admin():
                     flash('Failed to update order status.', 'error')
             except Exception as e:
                 flash(f'Error updating order: {e}', 'error')
+        elif action == 'add_referral_code':
+            try:
+                code = request.form.get('referral_code', '').strip()
+                if not code:
+                    flash('Please enter a code.', 'error')
+                elif add_referral_code(code):
+                    flash(f'Code "{code.upper()}" added successfully!', 'success')
+                else:
+                    flash('Failed to add code. It may already exist.', 'error')
+            except Exception as e:
+                flash(f'Error adding code: {e}', 'error')
+        elif action == 'delete_referral_code':
+            try:
+                code_id = request.form.get('code_id')
+                if delete_referral_code(code_id):
+                    flash('Code deleted successfully!', 'success')
+                else:
+                    flash('Failed to delete code.', 'error')
+            except Exception as e:
+                flash(f'Error deleting code: {e}', 'error')
+        elif action == 'toggle_referral_code':
+            try:
+                code_id = request.form.get('code_id')
+                if toggle_referral_code(code_id):
+                    flash('Code status toggled!', 'success')
+                else:
+                    flash('Failed to toggle code.', 'error')
+            except Exception as e:
+                flash(f'Error toggling code: {e}', 'error')
         return redirect(url_for('moiz_admin'))
     orders = get_all_orders()
     products = get_all_products_db()
     completed_orders = get_completed_orders()
-    return render_template('moiz_admin.html', orders=orders, products=products, completed_orders=completed_orders)
+    referral_codes = get_all_referral_codes()
+    return render_template('moiz_admin.html', orders=orders, products=products, completed_orders=completed_orders, referral_codes=referral_codes)
 
 @app.route('/moiz-admin-orders')
 def moiz_admin_orders():
@@ -278,3 +330,4 @@ with app.app_context():
     init_products_table()
     init_orders_table()
     init_completed_orders_table()
+    init_referral_codes_table()

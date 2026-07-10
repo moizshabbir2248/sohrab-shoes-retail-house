@@ -15,35 +15,43 @@
             }
         }
     </script>
-    <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
         .tab-content { display: none; }
         .tab-content.active { display: block; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        @media (max-width: 640px) {
+            .order-card { border-bottom: 1px solid #2a2a2a; padding: 12px 0; }
+            .order-card:last-child { border-bottom: none; }
+        }
     </style>
 </head>
-<body class="bg-surface text-white font-sans antialiased min-h-screen">
+<body class="bg-surface text-white font-sans antialiased min-h-screen pb-4">
 
     <!-- Header -->
     <div class="bg-card border-b border-border px-4 md:px-8 py-4 flex items-center justify-between">
-        <h1 class="text-base md:text-lg font-bold tracking-wider">&#128095; Admin Dashboard</h1>
+        <h1 class="text-base md:text-lg font-bold tracking-wider">Admin Dashboard</h1>
         <a href="/moiz-admin/logout" class="text-xs text-muted tracking-wider uppercase border border-border px-4 py-2 rounded hover:border-white hover:text-white transition-all">Logout</a>
     </div>
 
     <!-- Tab Navigation -->
     <div class="bg-card border-b border-border flex overflow-x-auto scrollbar-hide px-2 md:px-6">
-        <button class="tab-btn px-4 md:px-6 py-3 text-xs font-semibold tracking-wider uppercase text-white border-b-2 border-white whitespace-nowrap" onclick="switchTab(event,'orders')">&#128072; Live Orders</button>
-        <button class="tab-btn px-4 md:px-6 py-3 text-xs font-semibold tracking-wider uppercase text-muted border-b-2 border-transparent hover:text-white whitespace-nowrap" onclick="switchTab(event,'completed')">&#10003; Completed</button>
-        <button class="tab-btn px-4 md:px-6 py-3 text-xs font-semibold tracking-wider uppercase text-muted border-b-2 border-transparent hover:text-white whitespace-nowrap" onclick="switchTab(event,'inventory')">&#128230; Inventory</button>
-        <button class="tab-btn px-4 md:px-6 py-3 text-xs font-semibold tracking-wider uppercase text-muted border-b-2 border-transparent hover:text-white whitespace-nowrap" onclick="switchTab(event,'add')">&#10133; Add Product</button>
+        <button class="tab-btn px-3 md:px-6 py-3 text-[10px] md:text-xs font-semibold tracking-wider uppercase text-white border-b-2 border-white whitespace-nowrap" onclick="switchTab(event,'orders')">Live Orders</button>
+        <button class="tab-btn px-3 md:px-6 py-3 text-[10px] md:text-xs font-semibold tracking-wider uppercase text-muted border-b-2 border-transparent hover:text-white whitespace-nowrap" onclick="switchTab(event,'completed')">Completed</button>
+        <button class="tab-btn px-3 md:px-6 py-3 text-[10px] md:text-xs font-semibold tracking-wider uppercase text-muted border-b-2 border-transparent hover:text-white whitespace-nowrap" onclick="switchTab(event,'inventory')">Inventory</button>
+        <button class="tab-btn px-3 md:px-6 py-3 text-[10px] md:text-xs font-semibold tracking-wider uppercase text-muted border-b-2 border-transparent hover:text-white whitespace-nowrap" onclick="switchTab(event,'add')">Add Product</button>
+        <button class="tab-btn px-3 md:px-6 py-3 text-[10px] md:text-xs font-semibold tracking-wider uppercase text-muted border-b-2 border-transparent hover:text-white whitespace-nowrap" onclick="switchTab(event,'codes')">Manage Codes</button>
     </div>
 
     <!-- Container -->
-    <div class="p-4 md:p-8 max-w-7xl mx-auto">
+    <div class="p-3 md:p-8 max-w-7xl mx-auto">
 
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-            <div class="mb-6 space-y-2">
+            <div class="mb-4 md:mb-6 space-y-2">
                 {% for category, message in messages %}
-                <div class="px-4 py-3 rounded text-sm {% if category == 'success' %}bg-emerald-900/40 border border-emerald-700 text-emerald-300{% else %}bg-red-900/40 border border-red-700 text-red-300{% endif %}">{{ message }}</div>
+                <div class="px-3 md:px-4 py-3 rounded text-xs md:text-sm {% if category == 'success' %}bg-emerald-900/40 border border-emerald-700 text-emerald-300{% else %}bg-red-900/40 border border-red-700 text-red-300{% endif %}">{{ message }}</div>
                 {% endfor %}
             </div>
             {% endif %}
@@ -51,12 +59,13 @@
 
         <!-- TAB 1: Live Orders -->
         <div id="orders" class="tab-content active">
-            <div class="flex items-center gap-2 mb-5 pb-3 border-b border-border">
-                <span class="text-lg">&#128072;</span>
-                <h2 class="text-base font-semibold tracking-wider">Live COD Orders</h2>
+            <div class="flex items-center gap-2 mb-4 md:mb-5 pb-3 border-b border-border">
+                <h2 class="text-sm md:text-base font-semibold tracking-wider">Live COD Orders</h2>
+                <span class="text-[10px] md:text-xs bg-amber-900/40 text-amber-300 px-2 py-0.5 rounded font-bold">{{ orders|length }}</span>
             </div>
             {% if orders %}
-            <div class="overflow-x-auto">
+            <!-- Desktop Table -->
+            <div class="hidden md:block overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-card text-muted text-[10px] tracking-wider uppercase">
@@ -65,8 +74,10 @@
                             <th class="p-3 font-semibold border-b border-border">Customer</th>
                             <th class="p-3 font-semibold border-b border-border">WhatsApp</th>
                             <th class="p-3 font-semibold border-b border-border">Address</th>
-                             <th class="p-3 font-semibold border-b border-border">City</th>
+                            <th class="p-3 font-semibold border-b border-border">City</th>
                             <th class="p-3 font-semibold border-b border-border">Deal/Scheme</th>
+                            <th class="p-3 font-semibold border-b border-border">Referral</th>
+                            <th class="p-3 font-semibold border-b border-border">Total</th>
                             <th class="p-3 font-semibold border-b border-border">Date</th>
                             <th class="p-3 font-semibold border-b border-border">Action</th>
                         </tr>
@@ -81,14 +92,16 @@
                             <td class="p-3 text-sm max-w-[150px] truncate">{{ order.delivery_address }}</td>
                             <td class="p-3 text-sm">{{ order.city }}</td>
                             <td class="p-3 text-sm">{% if order.scheme and order.scheme != 'None' %}<span class="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded {% if order.scheme == 'Free Delivery' %}bg-emerald-900/40 text-emerald-300{% elif order.scheme == 'Pack Offer' %}bg-amber-900/40 text-amber-300{% endif %}">{{ order.scheme }}</span>{% else %}<span class="text-muted/50">-</span>{% endif %}</td>
+                            <td class="p-3 text-sm">{% if order.referral_code %}<span class="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-violet-900/40 text-violet-300">{{ order.referral_code }}</span>{% else %}<span class="text-muted/50">-</span>{% endif %}</td>
+                            <td class="p-3 text-sm font-semibold">Rs {{ order.total_price|int }}</td>
                             <td class="p-3 text-sm text-muted">{{ format_datetime(order.order_date) }}</td>
                             <td class="p-3">
                                 <div class="flex gap-2 flex-wrap">
-                                    <a href="https://wa.me/92{{ order.phone_number.lstrip('0') }}?text=Hi%20{{ order.customer_name }}!%20Your%20order%20%23{{ order.id }}%20is%20confirmed.%20We'll%20deliver%20to%20{{ order.delivery_address }}%2C%20{{ order.city }}" target="_blank" class="inline-block px-3 py-1.5 text-[10px] font-bold tracking-wider uppercase rounded bg-[#25D366] text-black hover:opacity-80 transition-opacity">&#128172; Chat</a>
+                                    <a href="https://wa.me/92{{ order.phone_number.lstrip('0') }}?text=Hi%20{{ order.customer_name }}!%20Your%20order%20%23{{ order.id }}%20is%20confirmed.%20We'll%20deliver%20to%20{{ order.delivery_address }}%2C%20{{ order.city }}" target="_blank" class="inline-block px-3 py-1.5 text-[10px] font-bold tracking-wider uppercase rounded bg-[#25D366] text-black hover:opacity-80 transition-opacity">Chat</a>
                                     <form method="POST" class="inline" onsubmit="return confirm('Mark order #{{ order.id }} as complete?');">
                                         <input type="hidden" name="action" value="mark_complete">
                                         <input type="hidden" name="order_id" value="{{ order.id }}">
-                                        <button type="submit" class="inline-block px-3 py-1.5 text-[10px] font-bold tracking-wider uppercase rounded bg-emerald-600 text-white hover:bg-emerald-500 transition-colors">&#10003; Complete</button>
+                                        <button type="submit" class="inline-block px-3 py-1.5 text-[10px] font-bold tracking-wider uppercase rounded bg-emerald-600 text-white hover:bg-emerald-500 transition-colors">Complete</button>
                                     </form>
                                 </div>
                             </td>
@@ -97,19 +110,54 @@
                     </tbody>
                 </table>
             </div>
+            <!-- Mobile Cards -->
+            <div class="md:hidden space-y-0">
+                {% for order in orders %}
+                <div class="order-card">
+                    <div class="flex items-start justify-between gap-2 mb-2">
+                        <div>
+                            <span class="text-xs font-bold text-amber-300">#{{ order.id }}</span>
+                            <span class="text-xs text-muted ml-2">{{ order.customer_name }}</span>
+                        </div>
+                        <span class="text-xs font-bold text-white">Rs {{ order.total_price|int }}</span>
+                    </div>
+                    <p class="text-xs text-white mb-1">{{ order.product_id_or_name }}</p>
+                    <p class="text-[11px] text-muted mb-1">{{ order.phone_number }} &middot; {{ order.city }}</p>
+                    <p class="text-[11px] text-muted mb-1 truncate">{{ order.delivery_address }}</p>
+                    <div class="flex items-center gap-2 mb-2 flex-wrap">
+                        {% if order.scheme and order.scheme != 'None' %}
+                        <span class="text-[9px] font-bold tracking-wider uppercase px-1.5 py-0.5 rounded {% if order.scheme == 'Free Delivery' %}bg-emerald-900/40 text-emerald-300{% elif order.scheme == 'Pack Offer' %}bg-amber-900/40 text-amber-300{% endif %}">{{ order.scheme }}</span>
+                        {% endif %}
+                        {% if order.referral_code %}
+                        <span class="text-[9px] font-bold tracking-wider uppercase px-1.5 py-0.5 rounded bg-violet-900/40 text-violet-300">{{ order.referral_code }}</span>
+                        {% endif %}
+                        <span class="text-[10px] text-muted">{{ format_datetime(order.order_date) }}</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <a href="https://wa.me/92{{ order.phone_number.lstrip('0') }}?text=Hi%20{{ order.customer_name }}!%20Your%20order%20%23{{ order.id }}%20is%20confirmed." target="_blank" class="flex-1 text-center px-3 py-2 text-[10px] font-bold tracking-wider uppercase rounded bg-[#25D366] text-black">Chat</a>
+                        <form method="POST" class="flex-1" onsubmit="return confirm('Mark order #{{ order.id }} as complete?');">
+                            <input type="hidden" name="action" value="mark_complete">
+                            <input type="hidden" name="order_id" value="{{ order.id }}">
+                            <button type="submit" class="w-full px-3 py-2 text-[10px] font-bold tracking-wider uppercase rounded bg-emerald-600 text-white">Complete</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
             {% else %}
-            <div class="text-center py-16 text-muted text-sm">No pending orders at the moment</div>
+            <div class="text-center py-12 md:py-16 text-muted text-sm">No pending orders at the moment</div>
             {% endif %}
         </div>
 
         <!-- TAB 2: Completed Orders -->
         <div id="completed" class="tab-content">
-            <div class="flex items-center gap-2 mb-5 pb-3 border-b border-border">
-                <span class="text-lg">&#10003;</span>
-                <h2 class="text-base font-semibold tracking-wider">Completed Orders History</h2>
+            <div class="flex items-center gap-2 mb-4 md:mb-5 pb-3 border-b border-border">
+                <h2 class="text-sm md:text-base font-semibold tracking-wider">Completed Orders</h2>
+                <span class="text-[10px] md:text-xs bg-emerald-900/40 text-emerald-300 px-2 py-0.5 rounded font-bold">{{ completed_orders|length }}</span>
             </div>
             {% if completed_orders %}
-            <div class="overflow-x-auto">
+            <!-- Desktop Table -->
+            <div class="hidden md:block overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-card text-muted text-[10px] tracking-wider uppercase">
@@ -117,10 +165,10 @@
                             <th class="p-3 font-semibold border-b border-border">Product</th>
                             <th class="p-3 font-semibold border-b border-border">Customer</th>
                             <th class="p-3 font-semibold border-b border-border">WhatsApp</th>
-                            <th class="p-3 font-semibold border-b border-border">Address</th>
-                             <th class="p-3 font-semibold border-b border-border">City</th>
+                            <th class="p-3 font-semibold border-b border-border">City</th>
                             <th class="p-3 font-semibold border-b border-border">Deal/Scheme</th>
-                            <th class="p-3 font-semibold border-b border-border">Order Date</th>
+                            <th class="p-3 font-semibold border-b border-border">Referral</th>
+                            <th class="p-3 font-semibold border-b border-border">Total</th>
                             <th class="p-3 font-semibold border-b border-border">Completed At</th>
                         </tr>
                     </thead>
@@ -131,29 +179,52 @@
                             <td class="p-3 text-sm">{{ co.product_id_or_name }}</td>
                             <td class="p-3 text-sm">{{ co.customer_name }}</td>
                             <td class="p-3 text-sm">{{ co.phone_number }}</td>
-                            <td class="p-3 text-sm max-w-[150px] truncate">{{ co.delivery_address }}</td>
                             <td class="p-3 text-sm">{{ co.city }}</td>
                             <td class="p-3 text-sm">{% if co.scheme and co.scheme != 'None' %}<span class="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded {% if co.scheme == 'Free Delivery' %}bg-emerald-900/40 text-emerald-300{% elif co.scheme == 'Pack Offer' %}bg-amber-900/40 text-amber-300{% endif %}">{{ co.scheme }}</span>{% else %}<span class="text-muted/50">-</span>{% endif %}</td>
-                            <td class="p-3 text-sm text-muted">{{ format_datetime(co.order_date) }}</td>
+                            <td class="p-3 text-sm">{% if co.referral_code %}<span class="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-violet-900/40 text-violet-300">{{ co.referral_code }}</span>{% else %}<span class="text-muted/50">-</span>{% endif %}</td>
+                            <td class="p-3 text-sm font-semibold">Rs {{ co.total_price|int }}</td>
                             <td class="p-3 text-sm text-muted">{{ format_datetime(co.completed_at) }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
+            <!-- Mobile Cards -->
+            <div class="md:hidden space-y-0">
+                {% for co in completed_orders %}
+                <div class="order-card">
+                    <div class="flex items-start justify-between gap-2 mb-1">
+                        <span class="text-xs font-bold text-emerald-300">#{{ co.order_id }}</span>
+                        <span class="text-xs font-bold text-white">Rs {{ co.total_price|int }}</span>
+                    </div>
+                    <p class="text-xs text-white mb-1">{{ co.product_id_or_name }}</p>
+                    <p class="text-[11px] text-muted">{{ co.customer_name }} &middot; {{ co.city }}</p>
+                    <div class="flex items-center gap-2 mt-1 flex-wrap">
+                        {% if co.scheme and co.scheme != 'None' %}
+                        <span class="text-[9px] font-bold tracking-wider uppercase px-1.5 py-0.5 rounded {% if co.scheme == 'Free Delivery' %}bg-emerald-900/40 text-emerald-300{% elif co.scheme == 'Pack Offer' %}bg-amber-900/40 text-amber-300{% endif %}">{{ co.scheme }}</span>
+                        {% endif %}
+                        {% if co.referral_code %}
+                        <span class="text-[9px] font-bold tracking-wider uppercase px-1.5 py-0.5 rounded bg-violet-900/40 text-violet-300">{{ co.referral_code }}</span>
+                        {% endif %}
+                    </div>
+                    <p class="text-[10px] text-muted mt-1">{{ format_datetime(co.completed_at) }}</p>
+                </div>
+                {% endfor %}
+            </div>
             {% else %}
-            <div class="text-center py-16 text-muted text-sm">No completed orders yet</div>
+            <div class="text-center py-12 md:py-16 text-muted text-sm">No completed orders yet</div>
             {% endif %}
         </div>
 
         <!-- TAB 3: Inventory -->
         <div id="inventory" class="tab-content">
-            <div class="flex items-center gap-2 mb-5 pb-3 border-b border-border">
-                <span class="text-lg">&#128230;</span>
-                <h2 class="text-base font-semibold tracking-wider">Manage Store Inventory</h2>
+            <div class="flex items-center gap-2 mb-4 md:mb-5 pb-3 border-b border-border">
+                <h2 class="text-sm md:text-base font-semibold tracking-wider">Manage Store Inventory</h2>
+                <span class="text-[10px] md:text-xs bg-blue-900/40 text-blue-300 px-2 py-0.5 rounded font-bold">{{ products|length }}</span>
             </div>
             {% if products %}
-            <div class="overflow-x-auto">
+            <!-- Desktop Table -->
+            <div class="hidden md:block overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-card text-muted text-[10px] tracking-wider uppercase">
@@ -185,7 +256,7 @@
                                     <form method="POST" class="inline" onsubmit="return confirm('Delete product {{ product.id }} - {{ product.title }}?');">
                                         <input type="hidden" name="action" value="delete_product">
                                         <input type="hidden" name="product_id" value="{{ product.id }}">
-                                        <button type="submit" class="px-2.5 py-1.5 text-[10px] font-bold tracking-wider uppercase rounded bg-red-700 text-white hover:bg-red-600 transition-colors">Delete</button>
+                                        <button type="submit" class="px-2.5 py-1.5 text-[10px] font-bold tracking-wider uppercase rounded bg-red-700 text-white hover:bg-red-600 transition-colors">Del</button>
                                     </form>
                                 </div>
                             </td>
@@ -194,71 +265,94 @@
                     </tbody>
                 </table>
             </div>
+            <!-- Mobile Cards -->
+            <div class="md:hidden space-y-0">
+                {% for product in products %}
+                <div class="order-card">
+                    <div class="flex items-start justify-between gap-2 mb-1">
+                        <p class="text-xs font-semibold text-white">{{ product.title }}</p>
+                        <span class="text-xs font-bold text-white">PKR {{ product.price }}</span>
+                    </div>
+                    <p class="text-[11px] text-muted mb-1">ID: {{ product.id }} &middot; Size: {{ product.size }} &middot; Stock: {{ product.stock }}</p>
+                    <div class="flex items-center gap-2 mb-2 flex-wrap">
+                        {% if product.original_price %}<span class="text-[10px] text-muted line-through">PKR {{ product.original_price }}</span>{% endif %}
+                        {% if 'Free' in product.shipping_rule %}<span class="text-[9px] font-bold tracking-wider uppercase bg-emerald-900/40 text-emerald-300 px-1.5 py-0.5 rounded">Free Ship</span>{% endif %}
+                        {% if product.stock == 0 %}<span class="text-[9px] font-bold tracking-wider uppercase bg-red-900/40 text-red-300 px-1.5 py-0.5 rounded">Sold Out</span>{% endif %}
+                    </div>
+                    <div class="flex gap-2">
+                        <button class="flex-1 px-3 py-2 text-[10px] font-bold tracking-wider uppercase rounded bg-amber-600 text-white" onclick="openEditModal('{{ product.id }}','{{ product.title }}','{{ product.size }}',{{ product.price }},{{ product.original_price or 0 }},'{{ product.code or '' }}',{{ product.condition_rating or 9.0 }},{{ product.stock }})">Edit</button>
+                        <form method="POST" class="flex-1" onsubmit="return confirm('Delete {{ product.title }}?');">
+                            <input type="hidden" name="action" value="delete_product">
+                            <input type="hidden" name="product_id" value="{{ product.id }}">
+                            <button type="submit" class="w-full px-3 py-2 text-[10px] font-bold tracking-wider uppercase rounded bg-red-700 text-white">Delete</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
             {% else %}
-            <div class="text-center py-16 text-muted text-sm">No products in inventory</div>
+            <div class="text-center py-12 md:py-16 text-muted text-sm">No products in inventory</div>
             {% endif %}
         </div>
 
         <!-- TAB 4: Add Product -->
         <div id="add" class="tab-content">
-            <div class="flex items-center gap-2 mb-5 pb-3 border-b border-border">
-                <span class="text-lg">&#10133;</span>
-                <h2 class="text-base font-semibold tracking-wider">Add New Product</h2>
+            <div class="flex items-center gap-2 mb-4 md:mb-5 pb-3 border-b border-border">
+                <h2 class="text-sm md:text-base font-semibold tracking-wider">Add New Product</h2>
             </div>
 
-            <form method="POST" enctype="multipart/form-data" class="max-w-2xl space-y-6">
+            <form method="POST" enctype="multipart/form-data" class="max-w-2xl space-y-4 md:space-y-6">
                 <input type="hidden" name="action" value="add_product">
 
                 <!-- Basic Info -->
-                <div class="bg-card border border-border rounded-xl p-5 space-y-4">
+                <div class="bg-card border border-border rounded-xl p-4 md:p-5 space-y-4">
                     <div class="flex items-center gap-2 pb-3 border-b border-border">
-                        <span>&#128221;</span>
-                        <h3 class="text-sm font-semibold tracking-wider">Basic Product Information</h3>
+                        <h3 class="text-xs md:text-sm font-semibold tracking-wider">Basic Product Information</h3>
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
                         <div>
                             <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Product ID *</label>
-                            <input type="text" name="product_id" required placeholder="e.g., PROD_001" class="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white placeholder-muted/40 outline-none focus:border-white transition-colors">
+                            <input type="text" name="product_id" required placeholder="e.g., PROD_001" class="w-full bg-surface border border-border rounded-lg px-3 md:px-4 py-2.5 md:py-3 text-sm text-white placeholder-muted/40 outline-none focus:border-white transition-colors">
                         </div>
                         <div>
                             <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Title *</label>
-                            <input type="text" name="title" required placeholder="e.g., Nike Air Max 90" class="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white placeholder-muted/40 outline-none focus:border-white transition-colors">
+                            <input type="text" name="title" required placeholder="e.g., Nike Air Max 90" class="w-full bg-surface border border-border rounded-lg px-3 md:px-4 py-2.5 md:py-3 text-sm text-white placeholder-muted/40 outline-none focus:border-white transition-colors">
                         </div>
                         <div>
                             <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Size *</label>
-                            <input type="text" name="size" required placeholder="e.g., 42" class="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white placeholder-muted/40 outline-none focus:border-white transition-colors">
+                            <input type="text" name="size" required placeholder="e.g., 42" class="w-full bg-surface border border-border rounded-lg px-3 md:px-4 py-2.5 md:py-3 text-sm text-white placeholder-muted/40 outline-none focus:border-white transition-colors">
                         </div>
                         <div>
                             <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Location Code</label>
-                            <input type="text" name="code" placeholder="SHERSHAH-A12" class="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white placeholder-muted/40 outline-none focus:border-white transition-colors">
+                            <input type="text" name="code" placeholder="SHERSHAH-A12" class="w-full bg-surface border border-border rounded-lg px-3 md:px-4 py-2.5 md:py-3 text-sm text-white placeholder-muted/40 outline-none focus:border-white transition-colors">
                         </div>
                         <div>
                             <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Price (PKR) *</label>
-                            <input type="number" name="price" required placeholder="Sale Price" step="0.01" class="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white placeholder-muted/40 outline-none focus:border-white transition-colors">
+                            <input type="number" name="price" required placeholder="Sale Price" step="0.01" class="w-full bg-surface border border-border rounded-lg px-3 md:px-4 py-2.5 md:py-3 text-sm text-white placeholder-muted/40 outline-none focus:border-white transition-colors">
                         </div>
                         <div>
                             <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Original Price (PKR)</label>
-                            <input type="number" name="original_price" placeholder="Original Price" step="0.01" class="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white placeholder-muted/40 outline-none focus:border-white transition-colors">
+                            <input type="number" name="original_price" placeholder="Original Price" step="0.01" class="w-full bg-surface border border-border rounded-lg px-3 md:px-4 py-2.5 md:py-3 text-sm text-white placeholder-muted/40 outline-none focus:border-white transition-colors">
                         </div>
                         <div>
                             <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Condition Rating (1-10)</label>
-                            <input type="number" name="condition_rating" value="9" min="1" max="10" step="0.1" class="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white placeholder-muted/40 outline-none focus:border-white transition-colors">
+                            <input type="number" name="condition_rating" value="9" min="1" max="10" step="0.1" class="w-full bg-surface border border-border rounded-lg px-3 md:px-4 py-2.5 md:py-3 text-sm text-white placeholder-muted/40 outline-none focus:border-white transition-colors">
                         </div>
                         <div>
                             <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Stock</label>
-                            <input type="number" name="stock" value="1" min="0" class="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white placeholder-muted/40 outline-none focus:border-white transition-colors">
+                            <input type="number" name="stock" value="1" min="0" class="w-full bg-surface border border-border rounded-lg px-3 md:px-4 py-2.5 md:py-3 text-sm text-white placeholder-muted/40 outline-none focus:border-white transition-colors">
                         </div>
                     </div>
                     <div>
                         <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Product Photo * <span class="text-muted/60 font-normal normal-case tracking-normal">(Click to upload)</span></label>
                         <div class="relative">
                             <input type="file" name="image_file" accept="image/*" required class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
-                            <div class="bg-surface border-2 border-dashed border-border rounded-lg px-5 py-6 text-center hover:border-white transition-colors">
-                                <svg class="w-8 h-8 mx-auto text-muted/60 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                                <span id="file-name" class="text-sm text-muted">Tap to select photo from gallery</span>
+                            <div class="bg-surface border-2 border-dashed border-border rounded-lg px-4 md:px-5 py-5 md:py-6 text-center hover:border-white transition-colors">
+                                <svg class="w-7 h-7 md:w-8 md:h-8 mx-auto text-muted/60 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                <span id="file-name" class="text-xs md:text-sm text-muted">Tap to select photo from gallery</span>
                             </div>
                         </div>
-                        <div id="file-preview" class="hidden mt-3 relative w-24 h-24 rounded-lg overflow-hidden border border-border">
+                        <div id="file-preview" class="hidden mt-3 relative w-20 h-20 md:w-24 md:h-24 rounded-lg overflow-hidden border border-border">
                             <img id="preview-img" class="w-full h-full object-cover">
                             <button type="button" onclick="this.parentElement.classList.add('hidden');document.querySelector('input[name=image_file]').value='';document.getElementById('file-name').textContent='Tap to select photo from gallery'" class="absolute top-1 right-1 w-5 h-5 bg-red-600 text-white rounded-full text-xs leading-none">&times;</button>
                         </div>
@@ -266,45 +360,144 @@
                 </div>
 
                 <!-- Marketing -->
-                <div class="bg-card border border-border rounded-xl p-5 space-y-4">
+                <div class="bg-card border border-border rounded-xl p-4 md:p-5 space-y-4">
                     <div class="flex items-center gap-2 pb-3 border-b border-border">
-                        <span>&#128293;</span>
-                        <h3 class="text-sm font-semibold tracking-wider">Sales & Marketing</h3>
+                        <h3 class="text-xs md:text-sm font-semibold tracking-wider">Sales & Marketing</h3>
                     </div>
                     <div class="flex items-center gap-3">
                         <input type="checkbox" id="is_sale" name="is_sale" value="1" class="w-4 h-4 accent-white">
-                        <label for="is_sale" class="text-sm text-muted">Enable Sale Countdown</label>
+                        <label for="is_sale" class="text-xs md:text-sm text-muted">Enable Sale Countdown</label>
                     </div>
                     <div>
                         <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Sale End Time</label>
-                        <input type="datetime-local" name="sale_end_time" class="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white outline-none focus:border-white transition-colors">
+                        <input type="datetime-local" name="sale_end_time" class="w-full bg-surface border border-border rounded-lg px-3 md:px-4 py-2.5 md:py-3 text-sm text-white outline-none focus:border-white transition-colors">
                     </div>
                     <div class="flex items-center gap-3">
                         <input type="checkbox" id="free_shipping" name="free_shipping" value="1" class="w-4 h-4 accent-white">
-                        <label for="free_shipping" class="text-sm text-muted">Enable Free Shipping</label>
+                        <label for="free_shipping" class="text-xs md:text-sm text-muted">Enable Free Shipping</label>
                     </div>
                     <div class="flex items-center gap-3">
                         <input type="checkbox" id="imported_premium" name="imported_premium" value="1" class="w-4 h-4 accent-white">
-                        <label for="imported_premium" class="text-sm text-muted">Tag as Imported Premium Stock</label>
+                        <label for="imported_premium" class="text-xs md:text-sm text-muted">Tag as Imported Premium Stock</label>
                     </div>
                 </div>
 
-                <button type="submit" class="w-full bg-white text-black text-xs font-bold tracking-[2px] uppercase py-4 rounded-lg hover:bg-neutral-200 transition-all">Add Product to Store</button>
+                <button type="submit" class="w-full bg-white text-black text-xs font-bold tracking-[2px] uppercase py-3 md:py-4 rounded-lg hover:bg-neutral-200 transition-all">Add Product to Store</button>
             </form>
         </div>
+
+        <!-- TAB 5: Manage Codes -->
+        <div id="codes" class="tab-content">
+            <div class="flex items-center gap-2 mb-4 md:mb-5 pb-3 border-b border-border">
+                <h2 class="text-sm md:text-base font-semibold tracking-wider">Manage Referral / Coupon Codes</h2>
+            </div>
+
+            <!-- Add New Code -->
+            <div class="bg-card border border-border rounded-xl p-4 md:p-5 mb-4 md:mb-6">
+                <h3 class="text-xs md:text-sm font-semibold tracking-wider mb-3">Add New Code</h3>
+                <form method="POST" class="flex flex-col sm:flex-row gap-3">
+                    <input type="hidden" name="action" value="add_referral_code">
+                    <input type="text" name="referral_code" required placeholder="e.g. MOIZ200" class="flex-1 bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white placeholder-muted/40 outline-none focus:border-white transition-colors uppercase tracking-wider">
+                    <button type="submit" class="bg-white text-black text-xs font-bold tracking-[2px] uppercase px-6 py-3 rounded-lg hover:bg-neutral-200 transition-all whitespace-nowrap">Add Code</button>
+                </form>
+                <p class="text-[11px] text-muted/60 mt-2">Valid codes give customers Rs 200 instant discount at checkout.</p>
+            </div>
+
+            <!-- Active Codes List -->
+            <div class="bg-card border border-border rounded-xl overflow-hidden">
+                <div class="px-4 md:px-5 py-3 border-b border-border">
+                    <h3 class="text-xs md:text-sm font-semibold tracking-wider">All Codes ({{ referral_codes|length }})</h3>
+                </div>
+                {% if referral_codes %}
+                <!-- Desktop Table -->
+                <div class="hidden md:block">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-surface text-muted text-[10px] tracking-wider uppercase">
+                                <th class="px-5 py-3 font-semibold">Code</th>
+                                <th class="px-5 py-3 font-semibold">Status</th>
+                                <th class="px-5 py-3 font-semibold">Created</th>
+                                <th class="px-5 py-3 font-semibold">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for rc in referral_codes %}
+                            <tr class="border-t border-border hover:bg-surface/50 transition-colors">
+                                <td class="px-5 py-3 text-sm font-bold tracking-wider">{{ rc.code }}</td>
+                                <td class="px-5 py-3">
+                                    {% if rc.is_active %}
+                                    <span class="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-emerald-900/40 text-emerald-300">Active</span>
+                                    {% else %}
+                                    <span class="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-red-900/40 text-red-300">Inactive</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-5 py-3 text-sm text-muted">{{ format_datetime(rc.created_at) }}</td>
+                                <td class="px-5 py-3">
+                                    <div class="flex gap-2">
+                                        <form method="POST" class="inline">
+                                            <input type="hidden" name="action" value="toggle_referral_code">
+                                            <input type="hidden" name="code_id" value="{{ rc.id }}">
+                                            <button type="submit" class="px-3 py-1.5 text-[10px] font-bold tracking-wider uppercase rounded {% if rc.is_active %}bg-amber-600 text-white hover:bg-amber-500{% else %}bg-emerald-600 text-white hover:bg-emerald-500{% endif %} transition-colors">{% if rc.is_active %}Deactivate{% else %}Activate{% endif %}</button>
+                                        </form>
+                                        <form method="POST" class="inline" onsubmit="return confirm('Delete code {{ rc.code }}?');">
+                                            <input type="hidden" name="action" value="delete_referral_code">
+                                            <input type="hidden" name="code_id" value="{{ rc.id }}">
+                                            <button type="submit" class="px-3 py-1.5 text-[10px] font-bold tracking-wider uppercase rounded bg-red-700 text-white hover:bg-red-600 transition-colors">Delete</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Mobile Cards -->
+                <div class="md:hidden">
+                    {% for rc in referral_codes %}
+                    <div class="px-4 py-3 border-b border-border last:border-b-0">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm font-bold tracking-wider">{{ rc.code }}</span>
+                            {% if rc.is_active %}
+                            <span class="text-[9px] font-bold tracking-wider uppercase px-1.5 py-0.5 rounded bg-emerald-900/40 text-emerald-300">Active</span>
+                            {% else %}
+                            <span class="text-[9px] font-bold tracking-wider uppercase px-1.5 py-0.5 rounded bg-red-900/40 text-red-300">Inactive</span>
+                            {% endif %}
+                        </div>
+                        <p class="text-[10px] text-muted mb-2">{{ format_datetime(rc.created_at) }}</p>
+                        <div class="flex gap-2">
+                            <form method="POST" class="flex-1">
+                                <input type="hidden" name="action" value="toggle_referral_code">
+                                <input type="hidden" name="code_id" value="{{ rc.id }}">
+                                <button type="submit" class="w-full px-3 py-2 text-[10px] font-bold tracking-wider uppercase rounded {% if rc.is_active %}bg-amber-600 text-white{% else %}bg-emerald-600 text-white{% endif %}">{% if rc.is_active %}Deactivate{% else %}Activate{% endif %}</button>
+                            </form>
+                            <form method="POST" class="flex-1" onsubmit="return confirm('Delete {{ rc.code }}?');">
+                                <input type="hidden" name="action" value="delete_referral_code">
+                                <input type="hidden" name="code_id" value="{{ rc.id }}">
+                                <button type="submit" class="w-full px-3 py-2 text-[10px] font-bold tracking-wider uppercase rounded bg-red-700 text-white">Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-10 text-muted text-sm">No codes yet. Add one above.</div>
+                {% endif %}
+            </div>
+        </div>
+
     </div>
 
     <!-- Edit Modal -->
     <div id="editModal" class="fixed inset-0 bg-black/80 z-50 hidden items-center justify-center p-4" onclick="if(event.target===this)closeEditModal()">
         <div class="bg-card border border-border rounded-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div class="flex items-center justify-between p-5 border-b border-border">
+            <div class="flex items-center justify-between p-4 md:p-5 border-b border-border">
                 <h3 class="text-sm font-semibold tracking-wider">Edit Product</h3>
                 <button onclick="closeEditModal()" class="text-muted hover:text-white text-xl leading-none">&times;</button>
             </div>
-            <form method="POST" class="p-5 space-y-4">
+            <form method="POST" class="p-4 md:p-5 space-y-4">
                 <input type="hidden" name="action" value="edit_product">
                 <input type="hidden" name="product_id" id="edit_product_id">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
                     <div>
                         <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Title *</label>
                         <input type="text" id="edit_title" name="title" required class="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white outline-none focus:border-white">

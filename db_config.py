@@ -41,6 +41,127 @@ def release_connection(conn):
     except Exception as e:
         print(f"[ERROR] Failed to release connection: {e}")
 
+
+# ==================== REFERRAL CODES TABLE ====================
+
+def init_referral_codes_table():
+    conn = None
+    try:
+        conn = get_neon_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS referral_codes (
+                id SERIAL PRIMARY KEY,
+                code VARCHAR(100) UNIQUE NOT NULL,
+                is_active BOOLEAN DEFAULT TRUE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        conn.commit()
+        cursor.close()
+        print("[OK] Referral codes table created/verified in Neon DB")
+        return True
+    except Exception as e:
+        print(f"[ERROR] Failed to create referral_codes table: {e}")
+        if conn:
+            conn.rollback()
+        return False
+    finally:
+        if conn:
+            release_connection(conn)
+
+def validate_referral_code(code):
+    conn = None
+    try:
+        conn = get_neon_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT id, code FROM referral_codes WHERE code = %s AND is_active = TRUE",
+            (code.strip().upper(),)
+        )
+        row = cursor.fetchone()
+        cursor.close()
+        return True if row else False
+    except Exception as e:
+        print(f"[ERROR] validate_referral_code: {e}")
+        return False
+    finally:
+        if conn:
+            release_connection(conn)
+
+def add_referral_code(code):
+    conn = None
+    try:
+        conn = get_neon_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO referral_codes (code) VALUES (%s) ON CONFLICT (code) DO UPDATE SET is_active = TRUE",
+            (code.strip().upper(),)
+        )
+        conn.commit()
+        cursor.close()
+        return True
+    except Exception as e:
+        print(f"[ERROR] add_referral_code: {e}")
+        if conn:
+            conn.rollback()
+        return False
+    finally:
+        if conn:
+            release_connection(conn)
+
+def delete_referral_code(code_id):
+    conn = None
+    try:
+        conn = get_neon_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM referral_codes WHERE id = %s", (code_id,))
+        conn.commit()
+        cursor.close()
+        return True
+    except Exception as e:
+        print(f"[ERROR] delete_referral_code: {e}")
+        if conn:
+            conn.rollback()
+        return False
+    finally:
+        if conn:
+            release_connection(conn)
+
+def get_all_referral_codes():
+    conn = None
+    try:
+        conn = get_neon_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, code, is_active, created_at FROM referral_codes ORDER BY created_at DESC")
+        rows = cursor.fetchall()
+        cursor.close()
+        return [{'id': r[0], 'code': r[1], 'is_active': r[2], 'created_at': r[3]} for r in rows]
+    except Exception as e:
+        print(f"[ERROR] get_all_referral_codes: {e}")
+        return []
+    finally:
+        if conn:
+            release_connection(conn)
+
+def toggle_referral_code(code_id):
+    conn = None
+    try:
+        conn = get_neon_connection()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE referral_codes SET is_active = NOT is_active WHERE id = %s", (code_id,))
+        conn.commit()
+        cursor.close()
+        return True
+    except Exception as e:
+        print(f"[ERROR] toggle_referral_code: {e}")
+        if conn:
+            conn.rollback()
+        return False
+    finally:
+        if conn:
+            release_connection(conn)
+
 # ==================== PRODUCTS TABLE ====================
 
 def init_products_table():
@@ -296,6 +417,7 @@ def init_orders_table():
             )
         """)
         cursor.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS scheme VARCHAR(50) DEFAULT 'None'")
+        cursor.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS referral_code VARCHAR(100)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_orders_date ON orders(order_date DESC)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status)")
         conn.commit()
@@ -326,11 +448,12 @@ def _row_to_order(row):
         'order_date': row[8],
         'status': row[9],
         'notes': row[10],
-        'scheme': row[11] if len(row) > 11 else 'None'
+        'scheme': row[11] if len(row) > 11 else 'None',
+        'referral_code': row[12] if len(row) > 12 else None
     }
 
 def create_order(customer_name, phone_number, delivery_address, city,
-                 product_id_or_name, quantity, total_price, notes=None, scheme='None'):
+                 product_id_or_name, quantity, total_price, notes=None, scheme='None', referral_code=None):
     conn = None
     try:
         conn = get_neon_connection()
@@ -338,11 +461,11 @@ def create_order(customer_name, phone_number, delivery_address, city,
         cursor.execute("""
             INSERT INTO orders
             (customer_name, phone_number, delivery_address, city,
-             product_id_or_name, quantity, total_price, notes, status, order_date, scheme)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'pending', %s, %s)
+             product_id_or_name, quantity, total_price, notes, status, order_date, scheme, referral_code)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'pending', %s, %s, %s)
             RETURNING id
         """, (customer_name, phone_number, delivery_address, city,
-              product_id_or_name, quantity, total_price, notes, datetime.utcnow(), scheme))
+              product_id_or_name, quantity, total_price, notes, datetime.utcnow(), scheme, referral_code))
         order_id = cursor.fetchone()[0]
         conn.commit()
         cursor.close()
@@ -365,7 +488,7 @@ def get_order_by_id(order_id):
         cursor.execute("""
             SELECT id, customer_name, phone_number, delivery_address, city,
                    product_id_or_name, quantity, total_price, order_date,
-                   status, notes, scheme
+                   status, notes, scheme, referral_code
             FROM orders WHERE id = %s
         """, (order_id,))
         row = cursor.fetchone()
@@ -387,14 +510,14 @@ def get_all_orders(status=None):
             cursor.execute("""
                 SELECT id, customer_name, phone_number, delivery_address, city,
                        product_id_or_name, quantity, total_price, order_date,
-                       status, notes, scheme
+                       status, notes, scheme, referral_code
                 FROM orders WHERE status = %s ORDER BY order_date DESC
             """, (status,))
         else:
             cursor.execute("""
                 SELECT id, customer_name, phone_number, delivery_address, city,
                        product_id_or_name, quantity, total_price, order_date,
-                       status, notes, scheme
+                       status, notes, scheme, referral_code
                 FROM orders ORDER BY order_date DESC
             """)
         rows = cursor.fetchall()
@@ -451,6 +574,7 @@ def init_completed_orders_table():
             )
         """)
         cursor.execute("ALTER TABLE completed_orders ADD COLUMN IF NOT EXISTS scheme VARCHAR(50) DEFAULT 'None'")
+        cursor.execute("ALTER TABLE completed_orders ADD COLUMN IF NOT EXISTS referral_code VARCHAR(100)")
         conn.commit()
         cursor.close()
         print("[OK] Completed orders table created/verified in Neon DB")
@@ -471,7 +595,7 @@ def mark_order_complete(order_id):
         cursor = conn.cursor()
         cursor.execute("""
             SELECT id, customer_name, phone_number, delivery_address, city,
-                   product_id_or_name, quantity, total_price, order_date, notes, scheme
+                   product_id_or_name, quantity, total_price, order_date, notes, scheme, referral_code
             FROM orders WHERE id = %s
         """, (order_id,))
         order = cursor.fetchone()
@@ -481,8 +605,8 @@ def mark_order_complete(order_id):
         cursor.execute("""
             INSERT INTO completed_orders
             (order_id, customer_name, phone_number, delivery_address, city,
-             product_id_or_name, quantity, total_price, order_date, notes, scheme)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+             product_id_or_name, quantity, total_price, order_date, notes, scheme, referral_code)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, order)
         cursor.execute("DELETE FROM orders WHERE id = %s", (order_id,))
         conn.commit()
@@ -506,7 +630,7 @@ def get_completed_orders():
         cursor.execute("""
             SELECT id, order_id, customer_name, phone_number, delivery_address,
                    city, product_id_or_name, quantity, total_price, order_date,
-                   completed_at, notes, scheme
+                   completed_at, notes, scheme, referral_code
             FROM completed_orders ORDER BY completed_at DESC
         """)
         rows = cursor.fetchall()
@@ -526,7 +650,8 @@ def get_completed_orders():
                 'order_date': r[9],
                 'completed_at': r[10],
                 'notes': r[11],
-                'scheme': r[12] if len(r) > 12 else 'None'
+                'scheme': r[12] if len(r) > 12 else 'None',
+                'referral_code': r[13] if len(r) > 13 else None
             })
         return result
     except Exception as e:
