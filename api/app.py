@@ -1,9 +1,11 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from functools import wraps
 import os
-import base64
+import json
 from datetime import datetime
 from dotenv import load_dotenv
+import cloudinary
+import cloudinary.uploader
 
 load_dotenv()
 
@@ -11,6 +13,8 @@ from api.db_config import (
     init_products_table, get_all_products_db, get_product_by_id_db,
     add_product_to_db, update_product_in_db, delete_product_from_db,
     search_products_db, filter_products_by_size_db, reduce_stock_db,
+    filter_products_by_category_db, filter_products_by_size_and_category_db,
+    get_all_categories_db,
 
     init_orders_table, create_order, get_order_by_id, get_all_orders,
     update_order_status,
@@ -21,30 +25,54 @@ from api.db_config import (
     delete_referral_code, get_all_referral_codes, toggle_referral_code
 )
 
+cloudinary.config(
+    cloud_name=os.environ.get('CLOUDINARY_CLOUD_NAME'),
+    api_key=os.environ.get('CLOUDINARY_API_KEY'),
+    api_secret=os.environ.get('CLOUDINARY_API_SECRET'),
+    secure=True
+)
+
 app = Flask(__name__, template_folder=os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'templates'),
             static_folder=os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'static'))
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'moiz_shoe_store_secret_2026')
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
 
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'mp4', 'mov', 'avi', 'heic'}
 ADMIN_EMAIL = os.getenv('ADMIN_EMAIL', 'moizshabbir2248@gmail.com')
 ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'abdulmoiz217@')
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-MIME_MAP = {'png': 'image/png', 'jpg': 'image/jpeg', 'jpeg': 'image/jpeg', 'gif': 'image/gif', 'webp': 'image/webp'}
+def upload_to_cloudinary(file):
+    try:
+        result = cloudinary.uploader.upload(
+            file,
+            folder="products",
+            resource_type="auto"
+        )
+        return result.get('secure_url')
+    except Exception as e:
+        print(f"[ERROR] Cloudinary upload failed: {e}")
+        return None
 
 # ==================== ROUTES ====================
 
 @app.route('/')
 def home():
     size = request.args.get('size')
-    if size:
+    category = request.args.get('category')
+    if size and category:
+        products = filter_products_by_size_and_category_db(size, category)
+    elif size:
         products = filter_products_by_size_db(size)
+    elif category:
+        products = filter_products_by_category_db(category)
     else:
         products = get_all_products_db()
-    return render_template('index.html', products=products)
+    categories = get_all_categories_db()
+    all_categories = ['Shoes', 'Ladies Suits', 'Watches', 'Jewelry', 'Chappal']
+    return render_template('index.html', products=products, categories=categories, all_categories=all_categories)
 
 @app.route('/product/<product_id>')
 def product_detail(product_id):
@@ -173,23 +201,26 @@ def moiz_admin():
                 code = request.form.get('code', '').strip()
                 condition_rating = float(request.form.get('condition_rating', 9.0))
                 stock = int(request.form.get('stock', 1))
-                file = request.files.get('image_file')
-                if not file or not file.filename:
-                    flash('Please select a product photo to upload.', 'error')
+                category = request.form.get('category', '').strip() or None
+                files = request.files.getlist('image_files')
+                valid_files = [f for f in files if f and f.filename and allowed_file(f.filename)]
+                if not valid_files:
+                    flash('Please select at least one product photo to upload.', 'error')
                     return redirect(url_for('moiz_admin'))
-                if not allowed_file(file.filename):
-                    flash('Invalid file type. Allowed: png, jpg, jpeg, gif, webp', 'error')
+                images = []
+                for f in valid_files[:5]:
+                    url = upload_to_cloudinary(f)
+                    if url:
+                        images.append(url)
+                if not images:
+                    flash('Failed to upload images. Please try again.', 'error')
                     return redirect(url_for('moiz_admin'))
-                ext = file.filename.rsplit('.', 1)[1].lower()
-                raw = file.read()
-                b64 = base64.b64encode(raw).decode('ascii')
-                image_url = f"data:{MIME_MAP[ext]};base64,{b64}"
                 data = {
                     'product_id': product_id,
                     'title': title,
                     'price': price,
                     'size': size,
-                    'image_url': image_url,
+                    'image_url': images[0],
                     'original_price': float(original_price) if original_price else None,
                     'stock': stock,
                     'code': code or None,
@@ -201,11 +232,12 @@ def moiz_admin():
                     'brand': None,
                     'description': None,
                     'color': None,
-                    'category': None,
-                    'condition': None
+                    'category': category,
+                    'condition': None,
+                    'images': json.dumps(images)
                 }
                 if add_product_to_db(data):
-                    flash(f'Product {product_id} added successfully!', 'success')
+                    flash(f'Product {product_id} added with {len(images)} image(s)!', 'success')
                 else:
                     flash('Error adding product to database.', 'error')
             except Exception as e:
@@ -213,6 +245,18 @@ def moiz_admin():
         elif action == 'edit_product':
             try:
                 product_id = request.form.get('product_id', '').strip()
+                existing = get_product_by_id_db(product_id)
+                existing_images = json.dumps(existing.get('images', [])) if existing else '[]'
+                new_files = request.files.getlist('image_files')
+                valid_new_files = [f for f in new_files if f and f.filename and allowed_file(f.filename)]
+                if valid_new_files:
+                    images = []
+                    for f in valid_new_files[:5]:
+                        url = upload_to_cloudinary(f)
+                        if url:
+                            images.append(url)
+                    if images:
+                        existing_images = json.dumps(images)
                 data = {
                     'title': request.form.get('title', '').strip(),
                     'size': request.form.get('size', '').strip(),
@@ -220,7 +264,9 @@ def moiz_admin():
                     'original_price': float(request.form.get('original_price', 0)) if request.form.get('original_price') else None,
                     'code': request.form.get('code', '').strip() or None,
                     'condition_rating': float(request.form.get('condition_rating', 9.0)),
-                    'stock': int(request.form.get('stock', 0))
+                    'stock': int(request.form.get('stock', 0)),
+                    'category': request.form.get('category', '').strip() or None,
+                    'images': existing_images
                 }
                 if update_product_in_db(product_id, data):
                     flash('Product updated successfully!', 'success')

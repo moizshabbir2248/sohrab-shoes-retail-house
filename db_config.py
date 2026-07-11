@@ -1,4 +1,5 @@
 import os
+import json
 from datetime import datetime
 from dotenv import load_dotenv
 import psycopg2
@@ -189,9 +190,12 @@ def init_products_table():
                 color VARCHAR(50),
                 category VARCHAR(100),
                 condition VARCHAR(100),
+                images TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        cursor.execute("ALTER TABLE products ADD COLUMN IF NOT EXISTS images TEXT")
+        cursor.execute("ALTER TABLE products ADD COLUMN IF NOT EXISTS category VARCHAR(100)")
         conn.commit()
         cursor.close()
         print("[OK] Products table created/verified in Neon DB")
@@ -205,9 +209,25 @@ def init_products_table():
         if conn:
             release_connection(conn)
 
+PRODUCT_COLUMNS = """
+    product_id, title, price, size, image_url, original_price, stock,
+    code, condition_rating, is_sale, sale_end_time, shipping_rule,
+    imported_premium, brand, description, color, category, condition,
+    COALESCE(images, '[]'), created_at
+"""
+
 def _row_to_product(row):
     if not row:
         return None
+    images_raw = row[18]
+    images = []
+    if images_raw:
+        try:
+            images = json.loads(images_raw)
+        except (json.JSONDecodeError, TypeError):
+            images = []
+    if not images and row[4]:
+        images = [row[4]]
     return {
         'id': row[0],
         'product_id': row[0],
@@ -229,7 +249,8 @@ def _row_to_product(row):
         'color': row[15],
         'category': row[16],
         'condition': row[17],
-        'created_at': row[18].isoformat() if row[18] else None
+        'images': images,
+        'created_at': row[19].isoformat() if row[19] else None
     }
 
 def get_all_products_db():
@@ -237,7 +258,7 @@ def get_all_products_db():
     try:
         conn = get_neon_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM products WHERE stock > 0 ORDER BY created_at DESC")
+        cursor.execute(f"SELECT {PRODUCT_COLUMNS} FROM products WHERE stock > 0 ORDER BY created_at DESC")
         rows = cursor.fetchall()
         cursor.close()
         return [_row_to_product(r) for r in rows]
@@ -253,7 +274,7 @@ def get_product_by_id_db(product_id):
     try:
         conn = get_neon_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM products WHERE product_id = %s", (product_id,))
+        cursor.execute(f"SELECT {PRODUCT_COLUMNS} FROM products WHERE product_id = %s", (product_id,))
         row = cursor.fetchone()
         cursor.close()
         return _row_to_product(row)
@@ -273,12 +294,12 @@ def add_product_to_db(data):
             INSERT INTO products
             (product_id, title, price, size, image_url, original_price, stock,
              code, condition_rating, is_sale, sale_end_time, shipping_rule,
-             imported_premium, brand, description, color, category, condition)
+             imported_premium, brand, description, color, category, condition, images)
             VALUES (%(product_id)s, %(title)s, %(price)s, %(size)s, %(image_url)s,
                     %(original_price)s, %(stock)s, %(code)s, %(condition_rating)s,
                     %(is_sale)s, %(sale_end_time)s, %(shipping_rule)s,
                     %(imported_premium)s, %(brand)s, %(description)s, %(color)s,
-                    %(category)s, %(condition)s)
+                    %(category)s, %(condition)s, %(images)s)
         """, data)
         conn.commit()
         cursor.close()
@@ -302,7 +323,8 @@ def update_product_in_db(product_id, data):
             UPDATE products SET
                 title = %(title)s, price = %(price)s, size = %(size)s,
                 original_price = %(original_price)s, stock = %(stock)s,
-                code = %(code)s, condition_rating = %(condition_rating)s
+                code = %(code)s, condition_rating = %(condition_rating)s,
+                category = %(category)s, images = %(images)s
             WHERE product_id = %(product_id)s
         """, {**data, 'product_id': product_id})
         conn.commit()
@@ -343,12 +365,12 @@ def search_products_db(query):
         conn = get_neon_connection()
         cursor = conn.cursor()
         q = f"%{query}%"
-        cursor.execute("""
-            SELECT * FROM products
+        cursor.execute(f"""
+            SELECT {PRODUCT_COLUMNS} FROM products
             WHERE stock > 0
-              AND (title ILIKE %s OR brand ILIKE %s OR description ILIKE %s)
+              AND (title ILIKE %s OR brand ILIKE %s OR description ILIKE %s OR category ILIKE %s)
             ORDER BY created_at DESC
-        """, (q, q, q))
+        """, (q, q, q, q))
         rows = cursor.fetchall()
         cursor.close()
         return [_row_to_product(r) for r in rows]
@@ -364,12 +386,60 @@ def filter_products_by_size_db(size):
     try:
         conn = get_neon_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM products WHERE size = %s AND stock > 0 ORDER BY created_at DESC", (size,))
+        cursor.execute(f"SELECT {PRODUCT_COLUMNS} FROM products WHERE size = %s AND stock > 0 ORDER BY created_at DESC", (size,))
         rows = cursor.fetchall()
         cursor.close()
         return [_row_to_product(r) for r in rows]
     except Exception as e:
         print(f"[ERROR] Failed to filter products: {e}")
+        return []
+    finally:
+        if conn:
+            release_connection(conn)
+
+def filter_products_by_category_db(category):
+    conn = None
+    try:
+        conn = get_neon_connection()
+        cursor = conn.cursor()
+        cursor.execute(f"SELECT {PRODUCT_COLUMNS} FROM products WHERE category = %s AND stock > 0 ORDER BY created_at DESC", (category,))
+        rows = cursor.fetchall()
+        cursor.close()
+        return [_row_to_product(r) for r in rows]
+    except Exception as e:
+        print(f"[ERROR] Failed to filter products by category: {e}")
+        return []
+    finally:
+        if conn:
+            release_connection(conn)
+
+def filter_products_by_size_and_category_db(size, category):
+    conn = None
+    try:
+        conn = get_neon_connection()
+        cursor = conn.cursor()
+        cursor.execute(f"SELECT {PRODUCT_COLUMNS} FROM products WHERE size = %s AND category = %s AND stock > 0 ORDER BY created_at DESC", (size, category))
+        rows = cursor.fetchall()
+        cursor.close()
+        return [_row_to_product(r) for r in rows]
+    except Exception as e:
+        print(f"[ERROR] Failed to filter products: {e}")
+        return []
+    finally:
+        if conn:
+            release_connection(conn)
+
+def get_all_categories_db():
+    conn = None
+    try:
+        conn = get_neon_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT DISTINCT category FROM products WHERE stock > 0 AND category IS NOT NULL AND category != '' ORDER BY category")
+        rows = cursor.fetchall()
+        cursor.close()
+        return [r[0] for r in rows]
+    except Exception as e:
+        print(f"[ERROR] Failed to fetch categories: {e}")
         return []
     finally:
         if conn:

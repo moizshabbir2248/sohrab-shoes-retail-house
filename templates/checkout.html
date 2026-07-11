@@ -50,8 +50,9 @@
             <div class="text-[10px] tracking-wider uppercase text-muted mb-3">Your Order</div>
             <div class="flex gap-4">
                 <div class="w-20 h-20 bg-black rounded-lg flex items-center justify-center flex-shrink-0 border border-border overflow-hidden">
-                    {% if product.image_url %}
-                    <img src="{{ product.image_url }}" alt="{{ product.name }}" class="w-full h-full object-cover">
+                    {% set checkout_imgs = product.images if product.images and product.images|length > 0 else ([product.image_url] if product.image_url else []) %}
+                    {% if checkout_imgs %}
+                    <img src="{{ checkout_imgs[0] }}" alt="{{ product.name }}" class="w-full h-full object-cover">
                     {% else %}
                     <span class="text-3xl">👟</span>
                     {% endif %}

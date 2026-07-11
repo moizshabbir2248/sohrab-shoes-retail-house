@@ -42,8 +42,9 @@
             <div class="bg-card border border-border rounded-lg overflow-hidden hover:border-accent/50 transition-all group {% if product.stock < 1 %}opacity-60{% endif %}">
                 <a href="/product/{{ product.id }}">
                     <div class="aspect-square bg-black overflow-hidden relative">
-                        {% if product.image_url %}
-                        <img src="{{ product.image_url }}" alt="{{ product.name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                        {% set imgs = product.images if product.images and product.images|length > 0 else ([product.image_url] if product.image_url else []) %}
+                        {% if imgs %}
+                        <img src="{{ imgs[0] }}" alt="{{ product.name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
                         {% endif %}
                         <div class="w-full h-full items-center justify-center text-4xl opacity-20 {% if product.image_url %}hidden{% endif %}">👟</div>
                         {% if product.stock < 1 %}

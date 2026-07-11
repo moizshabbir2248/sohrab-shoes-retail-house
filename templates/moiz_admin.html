@@ -230,6 +230,7 @@
                         <tr class="bg-card text-muted text-[10px] tracking-wider uppercase">
                             <th class="p-3 font-semibold border-b border-border">ID</th>
                             <th class="p-3 font-semibold border-b border-border">Title</th>
+                            <th class="p-3 font-semibold border-b border-border">Category</th>
                             <th class="p-3 font-semibold border-b border-border">Size</th>
                             <th class="p-3 font-semibold border-b border-border">Price</th>
                             <th class="p-3 font-semibold border-b border-border">Orig. Price</th>
@@ -244,6 +245,7 @@
                         <tr class="border-b border-border hover:bg-card/50 transition-colors">
                             <td class="p-3 text-sm">{{ product.id }}</td>
                             <td class="p-3 text-sm font-semibold">{{ product.title }}</td>
+                            <td class="p-3 text-sm">{% if product.category %}<span class="text-[10px] font-bold tracking-wider uppercase bg-blue-900/40 text-blue-300 px-2 py-0.5 rounded">{{ product.category }}</span>{% else %}<span class="text-muted/50">-</span>{% endif %}</td>
                             <td class="p-3 text-sm">{{ product.size }}</td>
                             <td class="p-3 text-sm">PKR {{ product.price }}</td>
                             <td class="p-3 text-sm text-muted">{% if product.original_price %}PKR {{ product.original_price }}{% else %}-{% endif %}</td>
@@ -252,7 +254,7 @@
                             <td class="p-3 text-sm">{% if product.stock == 0 %}<span class="text-[10px] font-bold tracking-wider uppercase bg-red-900/40 text-red-300 px-2 py-0.5 rounded">Sold Out</span>{% else %}{{ product.stock }}{% endif %}</td>
                             <td class="p-3">
                                 <div class="flex gap-1.5">
-                                    <button class="px-2.5 py-1.5 text-[10px] font-bold tracking-wider uppercase rounded bg-amber-600 text-white hover:bg-amber-500 transition-colors" onclick="openEditModal('{{ product.id }}','{{ product.title }}','{{ product.size }}',{{ product.price }},{{ product.original_price or 0 }},'{{ product.code or '' }}',{{ product.condition_rating or 9.0 }},{{ product.stock }})">Edit</button>
+                                    <button class="px-2.5 py-1.5 text-[10px] font-bold tracking-wider uppercase rounded bg-amber-600 text-white hover:bg-amber-500 transition-colors" onclick="openEditModal('{{ product.id }}','{{ product.title }}','{{ product.size }}',{{ product.price }},{{ product.original_price or 0 }},'{{ product.code or '' }}',{{ product.condition_rating or 9.0 }},{{ product.stock }},'{{ product.category or '' }}')">Edit</button>
                                     <form method="POST" class="inline" onsubmit="return confirm('Delete product {{ product.id }} - {{ product.title }}?');">
                                         <input type="hidden" name="action" value="delete_product">
                                         <input type="hidden" name="product_id" value="{{ product.id }}">
@@ -275,12 +277,13 @@
                     </div>
                     <p class="text-[11px] text-muted mb-1">ID: {{ product.id }} &middot; Size: {{ product.size }} &middot; Stock: {{ product.stock }}</p>
                     <div class="flex items-center gap-2 mb-2 flex-wrap">
+                        {% if product.category %}<span class="text-[9px] font-bold tracking-wider uppercase bg-blue-900/40 text-blue-300 px-1.5 py-0.5 rounded">{{ product.category }}</span>{% endif %}
                         {% if product.original_price %}<span class="text-[10px] text-muted line-through">PKR {{ product.original_price }}</span>{% endif %}
                         {% if 'Free' in product.shipping_rule %}<span class="text-[9px] font-bold tracking-wider uppercase bg-emerald-900/40 text-emerald-300 px-1.5 py-0.5 rounded">Free Ship</span>{% endif %}
                         {% if product.stock == 0 %}<span class="text-[9px] font-bold tracking-wider uppercase bg-red-900/40 text-red-300 px-1.5 py-0.5 rounded">Sold Out</span>{% endif %}
                     </div>
                     <div class="flex gap-2">
-                        <button class="flex-1 px-3 py-2 text-[10px] font-bold tracking-wider uppercase rounded bg-amber-600 text-white" onclick="openEditModal('{{ product.id }}','{{ product.title }}','{{ product.size }}',{{ product.price }},{{ product.original_price or 0 }},'{{ product.code or '' }}',{{ product.condition_rating or 9.0 }},{{ product.stock }})">Edit</button>
+                        <button class="flex-1 px-3 py-2 text-[10px] font-bold tracking-wider uppercase rounded bg-amber-600 text-white" onclick="openEditModal('{{ product.id }}','{{ product.title }}','{{ product.size }}',{{ product.price }},{{ product.original_price or 0 }},'{{ product.code or '' }}',{{ product.condition_rating or 9.0 }},{{ product.stock }},'{{ product.category or '' }}')">Edit</button>
                         <form method="POST" class="flex-1" onsubmit="return confirm('Delete {{ product.title }}?');">
                             <input type="hidden" name="action" value="delete_product">
                             <input type="hidden" name="product_id" value="{{ product.id }}">
@@ -319,6 +322,17 @@
                             <input type="text" name="title" required placeholder="e.g., Nike Air Max 90" class="w-full bg-surface border border-border rounded-lg px-3 md:px-4 py-2.5 md:py-3 text-sm text-white placeholder-muted/40 outline-none focus:border-white transition-colors">
                         </div>
                         <div>
+                            <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Category *</label>
+                            <select name="category" required class="w-full bg-surface border border-border rounded-lg px-3 md:px-4 py-2.5 md:py-3 text-sm text-white outline-none focus:border-white transition-colors">
+                                <option value="">Select Category</option>
+                                <option value="Shoes">Shoes</option>
+                                <option value="Ladies Suits">Ladies Suits</option>
+                                <option value="Watches">Watches</option>
+                                <option value="Jewelry">Jewelry</option>
+                                <option value="Chappal">Chappal</option>
+                            </select>
+                        </div>
+                        <div>
                             <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Size *</label>
                             <input type="text" name="size" required placeholder="e.g., 42" class="w-full bg-surface border border-border rounded-lg px-3 md:px-4 py-2.5 md:py-3 text-sm text-white placeholder-muted/40 outline-none focus:border-white transition-colors">
                         </div>
@@ -344,18 +358,15 @@
                         </div>
                     </div>
                     <div>
-                        <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Product Photo * <span class="text-muted/60 font-normal normal-case tracking-normal">(Click to upload)</span></label>
+                        <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Product Photos * <span class="text-muted/60 font-normal normal-case tracking-normal">(Up to 5 images, first image is the main photo)</span></label>
                         <div class="relative">
-                            <input type="file" name="image_file" accept="image/*" required class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                            <input type="file" name="image_files" accept="image/*" multiple required class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
                             <div class="bg-surface border-2 border-dashed border-border rounded-lg px-4 md:px-5 py-5 md:py-6 text-center hover:border-white transition-colors">
                                 <svg class="w-7 h-7 md:w-8 md:h-8 mx-auto text-muted/60 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                                <span id="file-name" class="text-xs md:text-sm text-muted">Tap to select photo from gallery</span>
+                                <span id="file-name" class="text-xs md:text-sm text-muted">Tap to select photos from gallery</span>
                             </div>
                         </div>
-                        <div id="file-preview" class="hidden mt-3 relative w-20 h-20 md:w-24 md:h-24 rounded-lg overflow-hidden border border-border">
-                            <img id="preview-img" class="w-full h-full object-cover">
-                            <button type="button" onclick="this.parentElement.classList.add('hidden');document.querySelector('input[name=image_file]').value='';document.getElementById('file-name').textContent='Tap to select photo from gallery'" class="absolute top-1 right-1 w-5 h-5 bg-red-600 text-white rounded-full text-xs leading-none">&times;</button>
-                        </div>
+                        <div id="file-preview" class="hidden mt-3 flex flex-wrap gap-2"></div>
                     </div>
                 </div>
 
@@ -494,7 +505,7 @@
                 <h3 class="text-sm font-semibold tracking-wider">Edit Product</h3>
                 <button onclick="closeEditModal()" class="text-muted hover:text-white text-xl leading-none">&times;</button>
             </div>
-            <form method="POST" class="p-4 md:p-5 space-y-4">
+            <form method="POST" enctype="multipart/form-data" class="p-4 md:p-5 space-y-4">
                 <input type="hidden" name="action" value="edit_product">
                 <input type="hidden" name="product_id" id="edit_product_id">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
@@ -505,6 +516,17 @@
                     <div>
                         <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Size *</label>
                         <input type="text" id="edit_size" name="size" required class="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white outline-none focus:border-white">
+                    </div>
+                    <div>
+                        <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Category</label>
+                        <select id="edit_category" name="category" class="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white outline-none focus:border-white">
+                            <option value="">No Category</option>
+                            <option value="Shoes">Shoes</option>
+                            <option value="Ladies Suits">Ladies Suits</option>
+                            <option value="Watches">Watches</option>
+                            <option value="Jewelry">Jewelry</option>
+                            <option value="Chappal">Chappal</option>
+                        </select>
                     </div>
                     <div>
                         <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Price (PKR) *</label>
@@ -527,24 +549,41 @@
                         <input type="number" id="edit_stock" name="stock" min="0" required class="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white outline-none focus:border-white">
                     </div>
                 </div>
+                <div>
+                    <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Replace Images <span class="text-muted/60 font-normal normal-case tracking-normal">(Optional, up to 5)</span></label>
+                    <input type="file" name="image_files" accept="image/*" multiple class="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-bold file:bg-white file:text-black hover:file:bg-neutral-200 file:cursor-pointer">
+                </div>
                 <button type="submit" class="w-full bg-white text-black text-xs font-bold tracking-[2px] uppercase py-4 rounded-lg hover:bg-neutral-200 transition-all">Update Product</button>
             </form>
         </div>
     </div>
 
     <script>
-        document.querySelector('input[name="image_file"]').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                document.getElementById('file-name').textContent = file.name;
+        document.querySelector('input[name="image_files"]').addEventListener('change', function(e) {
+            const files = Array.from(e.target.files).slice(0, 5);
+            if (files.length === 0) return;
+            const label = document.getElementById('file-name');
+            label.textContent = files.length === 1 ? files[0].name : files.length + ' photos selected';
+            const container = document.getElementById('file-preview');
+            container.innerHTML = '';
+            container.classList.remove('hidden');
+            files.forEach(function(file, idx) {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'relative w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden border border-border flex-shrink-0';
+                const img = document.createElement('img');
+                img.className = 'w-full h-full object-cover';
                 const reader = new FileReader();
-                reader.onload = function(ev) {
-                    const preview = document.getElementById('preview-img');
-                    preview.src = ev.target.result;
-                    document.getElementById('file-preview').classList.remove('hidden');
-                };
+                reader.onload = function(ev) { img.src = ev.target.result; };
                 reader.readAsDataURL(file);
-            }
+                wrapper.appendChild(img);
+                if (idx === 0) {
+                    const badge = document.createElement('span');
+                    badge.className = 'absolute bottom-0 left-0 right-0 bg-amber-600 text-white text-[8px] font-bold text-center py-0.5 tracking-wider';
+                    badge.textContent = 'MAIN';
+                    wrapper.appendChild(badge);
+                }
+                container.appendChild(wrapper);
+            });
         });
         function switchTab(event, tabId) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
@@ -556,7 +595,7 @@
             event.currentTarget.classList.remove('text-muted', 'border-transparent');
             event.currentTarget.classList.add('text-white', 'border-white');
         }
-        function openEditModal(id, title, size, price, originalPrice, code, conditionRating, stock) {
+        function openEditModal(id, title, size, price, originalPrice, code, conditionRating, stock, category) {
             document.getElementById('edit_product_id').value = id;
             document.getElementById('edit_title').value = title;
             document.getElementById('edit_size').value = size;
@@ -565,6 +604,7 @@
             document.getElementById('edit_code').value = code;
             document.getElementById('edit_condition_rating').value = conditionRating;
             document.getElementById('edit_stock').value = stock;
+            document.getElementById('edit_category').value = category || '';
             document.getElementById('editModal').classList.remove('hidden');
             document.getElementById('editModal').classList.add('flex');
         }
