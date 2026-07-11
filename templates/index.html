@@ -55,6 +55,8 @@
     </div>
 
     <!-- Size Filter -->
+    {% set active_category = request.args.get('category', '') %}
+    {% if not active_category or active_category in ['Shoes', 'Chappal'] %}
     <div class="sticky top-[120px] sm:top-[120px] z-30 bg-white border-b border-gray-200 overflow-x-auto">
         <div class="flex gap-2 px-4 py-3 min-w-max max-w-7xl mx-auto">
             <a href="/{% if request.args.get('category') %}?category={{ request.args.get('category') }}{% endif %}" class="inline-block px-5 py-2 text-xs font-semibold tracking-wider uppercase rounded-full border transition-all {% if not request.args.get('size') %}bg-gray-900 text-white border-gray-900{% else %}bg-white text-gray-500 border-gray-200 hover:border-gray-900 hover:text-gray-900{% endif %}">All Sizes</a>
@@ -63,6 +65,7 @@
             {% endfor %}
         </div>
     </div>
+    {% endif %}
 
     <!-- Main Content -->
     <main class="max-w-7xl mx-auto px-4 pt-6">
