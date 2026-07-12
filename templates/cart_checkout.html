@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Checkout - Cash on Delivery</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        surface: '#0f0f0f',
+                        card: '#1a1a1a',
+                        border: '#2a2a2a',
+                        muted: '#a0a0a0',
+                        accent: '#f59e0b',
+                    },
+                    fontFamily: { sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'] },
+                }
+            }
+        }
+    </script>
+    <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');</style>
+</head>
+<body class="bg-surface text-white font-sans antialiased pb-28">
+
+    <!-- Header -->
+    <header class="fixed top-0 left-0 right-0 z-40 bg-surface/95 backdrop-blur-md border-b border-border px-4 py-3 flex items-center gap-4">
+        <a href="/cart" class="text-xl text-white hover:opacity-70 transition-opacity">&larr;</a>
+        <h1 class="text-sm font-semibold tracking-wider uppercase">Checkout</h1>
+    </header>
+
+    <!-- Main -->
+    <div class="mt-[57px] px-4 pt-6 max-w-lg mx-auto">
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="mb-4 space-y-2">
+                {% for category, message in messages %}
+                <div class="px-4 py-3 rounded text-sm {% if category == 'success' %}bg-emerald-900/40 border border-emerald-700 text-emerald-300{% else %}bg-red-900/40 border border-red-700 text-red-300{% endif %}">{{ message }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Order Items -->
+        <div class="bg-card border border-border rounded-lg p-4 mb-4">
+            <div class="text-[10px] tracking-wider uppercase text-muted mb-3">Your Order ({{ summary.item_count }} item{{ 's' if summary.item_count != 1 else '' }})</div>
+            <div class="space-y-3">
+                {% for item in summary.cart_items %}
+                <div class="flex gap-3">
+                    <div class="w-14 h-14 bg-black rounded-lg flex items-center justify-center flex-shrink-0 border border-border overflow-hidden">
+                        {% if item.image %}
+                        <img src="{{ item.image }}" alt="{{ item.name }}" class="w-full h-full object-cover">
+                        {% else %}
+                        <span class="text-xl">📦</span>
+                        {% endif %}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h3 class="text-sm font-medium text-white truncate">{{ item.name }}</h3>
+                        <p class="text-[11px] text-muted">Qty: {{ item.quantity }} &times; Rs {{ item.price|int }}</p>
+                    </div>
+                    <p class="text-sm font-bold text-white flex-shrink-0">Rs {{ item.line_total|int }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- COD Info -->
+        <div class="bg-card border border-border rounded-lg p-4 mb-4">
+            <h3 class="text-xs font-semibold tracking-wider uppercase text-white mb-3">Cash on Delivery</h3>
+            <ul class="space-y-2">
+                <li class="text-sm text-muted flex items-start gap-2 before:content-['•'] before:text-white before:font-bold before:flex-shrink-0">Pay when you receive your order at your doorstep</li>
+                <li class="text-sm text-muted flex items-start gap-2 before:content-['•'] before:text-white before:font-bold before:flex-shrink-0">No advance payment required</li>
+                <li class="text-sm text-muted flex items-start gap-2 before:content-['•'] before:text-white before:font-bold before:flex-shrink-0">We'll contact you on WhatsApp to confirm</li>
+            </ul>
+        </div>
+
+        <!-- Checkout Form -->
+        <form method="POST" action="/checkout-cart">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+            <div class="bg-card border border-border rounded-lg p-4">
+                <h3 class="text-xs font-semibold tracking-wider uppercase text-white mb-4 flex items-center gap-2">Delivery Details</h3>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Your Name <span class="text-red-400">*</span></label>
+                        <input type="text" name="customer_name" required value="{{ request.form.get('customer_name', '') }}" placeholder="Enter your full name" class="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white placeholder-muted/40 outline-none focus:border-accent transition-colors">
+                    </div>
+
+                    <div>
+                        <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">WhatsApp Number <span class="text-red-400">*</span></label>
+                        <input type="tel" name="whatsapp" required pattern="[0-9]{11}" value="{{ request.form.get('whatsapp', '') }}" placeholder="03XXXXXXXXX" class="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white placeholder-muted/40 outline-none focus:border-accent transition-colors">
+                        <p class="text-[11px] text-muted/60 mt-1">We'll contact you on this number</p>
+                    </div>
+
+                    <div>
+                        <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Full Address <span class="text-red-400">*</span></label>
+                        <textarea name="address" required placeholder="House/Flat no., Street, Area, Landmark" class="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white placeholder-muted/40 outline-none focus:border-accent transition-colors resize-vertical min-h-[80px]">{{ request.form.get('address', '') }}</textarea>
+                    </div>
+
+                    <div>
+                        <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">City <span class="text-red-400">*</span></label>
+                        <input type="text" name="city" required value="{{ request.form.get('city', '') }}" placeholder="Enter your city" class="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white placeholder-muted/40 outline-none focus:border-accent transition-colors">
+                        <p class="text-[11px] text-muted/60 mt-1">Free delivery in Karachi &middot; Rs 500 shipping outside Karachi</p>
+                    </div>
+
+                    <!-- Referral / Coupon Code -->
+                    <div>
+                        <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Coupon / Referral Code <span class="text-muted/50">(Optional)</span></label>
+                        <div class="flex gap-2">
+                            <input type="text" id="referral-input" name="referral_code" placeholder="e.g. MOIZ200" value="{{ request.form.get('referral_code', '') }}" class="flex-1 bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white placeholder-muted/40 outline-none focus:border-accent transition-colors uppercase tracking-wider">
+                            <button type="button" id="apply-btn" onclick="validateReferral()" class="bg-accent text-black text-xs font-bold tracking-wider uppercase px-4 rounded-lg hover:bg-amber-400 transition-colors whitespace-nowrap">Apply</button>
+                        </div>
+                        <p id="referral-status" class="text-[11px] mt-1.5 hidden"></p>
+                    </div>
+
+                    <div>
+                        <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Additional Notes <span class="text-muted/50">(Optional)</span></label>
+                        <textarea name="notes" placeholder="Any special instructions for delivery?" class="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white placeholder-muted/40 outline-none focus:border-accent transition-colors resize-vertical min-h-[80px]">{{ request.form.get('notes', '') }}</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fixed Bottom Bar -->
+            <div class="fixed bottom-0 left-0 right-0 z-40 bg-surface/95 backdrop-blur-md border-t border-border px-4 py-3">
+                <div class="space-y-1 mb-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[11px] text-muted tracking-wider uppercase">Subtotal</span>
+                        <span id="checkout-subtotal" class="text-[11px] text-muted">Rs {{ summary.subtotal|int }}</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-[11px] text-muted tracking-wider uppercase">Shipping</span>
+                        <span id="checkout-shipping" class="text-[11px] text-muted">Calculating...</span>
+                    </div>
+                    <div id="discount-row" class="items-center justify-between hidden">
+                        <span class="text-[11px] text-emerald-400 tracking-wider uppercase">Discount</span>
+                        <span id="checkout-discount" class="text-[11px] text-emerald-400 font-semibold">- Rs 0</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold text-white">Total <span class="text-muted font-normal">(including shipping)</span></span>
+                        <span id="checkout-total" class="text-sm font-bold text-white">Rs {{ summary.total|int }}</span>
+                    </div>
+                </div>
+                <button type="submit" class="w-full text-center bg-white text-black text-xs font-bold tracking-[2px] uppercase py-4 rounded-lg hover:bg-neutral-200 transition-all">Place Order</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        var baseSubtotal = {{ summary.subtotal|int }};
+        var discountAmount = 0;
+        var cityInput = document.querySelector('input[name="city"]');
+        var shippingDisplay = document.getElementById('checkout-shipping');
+        var totalDisplay = document.getElementById('checkout-total');
+        var discountRow = document.getElementById('discount-row');
+        var discountDisplay = document.getElementById('checkout-discount');
+        var referralInput = document.getElementById('referral-input');
+        var statusEl = document.getElementById('referral-status');
+        var applyBtn = document.getElementById('apply-btn');
+
+        function updateTotal() {
+            var city = (cityInput ? cityInput.value : '').trim().toLowerCase();
+            var shipping = (city && city !== 'karachi') ? 500 : 0;
+            var total = Math.max(baseSubtotal - discountAmount + shipping, 0);
+
+            if (!cityInput || !cityInput.value.trim()) {
+                shippingDisplay.textContent = 'Enter city';
+                shippingDisplay.className = 'text-[11px] text-muted';
+            } else if (shipping === 0) {
+                shippingDisplay.textContent = 'Free';
+                shippingDisplay.className = 'text-[11px] text-emerald-400 font-semibold';
+            } else {
+                shippingDisplay.textContent = 'Rs ' + shipping.toLocaleString();
+                shippingDisplay.className = 'text-[11px] text-amber-400 font-semibold';
+            }
+
+            if (discountAmount > 0) {
+                discountRow.classList.remove('hidden');
+                discountRow.classList.add('flex');
+                discountDisplay.textContent = '- Rs ' + discountAmount.toLocaleString();
+            } else {
+                discountRow.classList.add('hidden');
+                discountRow.classList.remove('flex');
+            }
+
+            totalDisplay.textContent = 'Rs ' + total.toLocaleString();
+        }
+
+        function validateReferral() {
+            var code = referralInput.value.trim();
+            if (!code) {
+                statusEl.textContent = 'Please enter a code.';
+                statusEl.className = 'text-[11px] mt-1.5 text-red-400';
+                statusEl.classList.remove('hidden');
+                return;
+            }
+
+            applyBtn.disabled = true;
+            applyBtn.textContent = '...';
+            statusEl.classList.add('hidden');
+
+            fetch('/validate-referral', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: code })
+            })
+            .then(function(res) {
+                if (!res.ok) throw new Error('Server returned ' + res.status);
+                return res.json();
+            })
+            .then(function(data) {
+                statusEl.textContent = data.message || 'Unknown response.';
+                statusEl.classList.remove('hidden');
+
+                if (data.success === true) {
+                    statusEl.className = 'text-[11px] mt-1.5 text-emerald-400 font-medium';
+                    discountAmount = parseInt(data.discount_amount, 10) || 0;
+                    referralInput.value = code.toUpperCase();
+                } else {
+                    statusEl.className = 'text-[11px] mt-1.5 text-red-400';
+                    discountAmount = 0;
+                }
+
+                updateTotal();
+                applyBtn.disabled = false;
+                applyBtn.textContent = 'Apply';
+            })
+            .catch(function() {
+                statusEl.textContent = 'Could not verify code. Try again.';
+                statusEl.className = 'text-[11px] mt-1.5 text-red-400';
+                statusEl.classList.remove('hidden');
+                applyBtn.disabled = false;
+                applyBtn.textContent = 'Apply';
+            });
+        }
+
+        referralInput.addEventListener('input', function() {
+            if (discountAmount > 0) {
+                discountAmount = 0;
+                statusEl.classList.add('hidden');
+                updateTotal();
+            }
+        });
+
+        if (cityInput) cityInput.addEventListener('input', updateTotal);
+        updateTotal();
+    </script>
+
+</body>
+</html>

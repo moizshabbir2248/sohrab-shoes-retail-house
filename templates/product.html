@@ -166,11 +166,22 @@
         {% elif is_reserved and not is_mine %}
         <div class="block w-full text-center bg-amber-100 text-amber-700 text-xs font-bold tracking-[2px] uppercase py-4 rounded-xl cursor-not-allowed">Temporarily Reserved</div>
         {% elif is_reserved and is_mine %}
-        <a href="/checkout/{{ product.id }}" class="block w-full text-center bg-emerald-600 text-white text-xs font-bold tracking-[2px] uppercase py-4 rounded-xl hover:bg-emerald-500 transition-all">Complete Your Order</a>
+        <div class="flex gap-3">
+            <button onclick="addToCart('{{ product.id }}')" class="flex-1 text-center bg-gray-100 text-gray-700 text-xs font-bold tracking-[2px] uppercase py-4 rounded-xl hover:bg-gray-200 transition-all">Add to Cart</button>
+            <a href="/checkout/{{ product.id }}" class="flex-[2] block text-center bg-emerald-600 text-white text-xs font-bold tracking-[2px] uppercase py-4 rounded-xl hover:bg-emerald-500 transition-all text-center">Complete Your Order</a>
+        </div>
         {% else %}
-        <a href="/checkout/{{ product.id }}" class="block w-full text-center bg-gray-900 text-white text-xs font-bold tracking-[2px] uppercase py-4 rounded-xl hover:bg-gray-800 transition-all">Order Now &bull; Pay on Delivery</a>
+        <div class="flex gap-3">
+            <button onclick="addToCart('{{ product.id }}')" class="flex-1 text-center bg-gray-100 text-gray-700 text-xs font-bold tracking-[2px] uppercase py-4 rounded-xl hover:bg-gray-200 transition-all">Add to Cart</button>
+            <a href="/checkout/{{ product.id }}" class="flex-[2] block text-center bg-gray-900 text-white text-xs font-bold tracking-[2px] uppercase py-4 rounded-xl hover:bg-gray-800 transition-all text-center">Order Now &bull; Pay on Delivery</a>
+        </div>
         {% endif %}
     </div>
+
+    <!-- Floating Checkout Button -->
+    <a href="/cart" class="fixed bottom-36 right-6 z-50 w-14 h-14 bg-emerald-500 rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/30 hover:scale-110 active:scale-95 transition-all duration-200" aria-label="Go to Cart">
+        <svg class="w-6 h-6 fill-white" viewBox="0 0 24 24"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg>
+    </a>
 
     <!-- Floating WhatsApp Button -->
     <a href="https://wa.me/923322942248?text=Salam,%20mujhe%20shoes%20ke%20baare%20mein%20puchna%20hai" target="_blank" rel="noopener" class="fixed bottom-20 right-6 z-50 w-14 h-14 bg-[#25D366] rounded-full flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-all duration-200" aria-label="Chat on WhatsApp">
@@ -188,6 +199,26 @@
             });
             document.querySelector('[data-thumb="' + index + '"]').classList.remove('border-gray-200');
             document.querySelector('[data-thumb="' + index + '"]').classList.add('border-gray-900');
+        }
+
+        function addToCart(productId) {
+            fetch('/add-to-cart', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ product_id: productId, quantity: 1 })
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.success) {
+                    var count = data.cart_summary ? data.cart_summary.item_count : '?';
+                    alert('Added to cart! (' + count + ' item' + (count !== 1 ? 's' : '') + ' in cart)');
+                } else {
+                    alert(data.message || 'Failed to add to cart.');
+                }
+            })
+            .catch(function() {
+                alert('Could not add to cart. Please try again.');
+            });
         }
     </script>
 

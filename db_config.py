@@ -942,6 +942,60 @@ def get_completed_orders():
         if conn:
             release_connection(conn)
 
+# ==================== CART ====================
+
+SHIPPING_FEE = 500
+
+def calculate_totals(cart_items, city=None):
+    """
+    cart_items: list of dicts with 'product_id' and 'quantity'
+    city: optional string — if 'karachi' (case-insensitive), shipping is free
+    Returns: {items: [...], item_count, subtotal, shipping, total}
+    """
+    items = []
+    subtotal = 0.0
+
+    for item in cart_items:
+        product = get_product_by_id_db(item.get('product_id', ''))
+        if not product or product.get('stock', 0) <= 0:
+            continue
+
+        qty = min(item.get('quantity', 1), product['stock'])
+        price = float(product['price'])
+        line_total = round(price * qty, 2)
+
+        imgs = product.get('images') or []
+        if not imgs and product.get('image_url'):
+            imgs = [product['image_url']]
+
+        items.append({
+            'product_id': product['id'],
+            'name': product.get('name', product.get('title', '')),
+            'price': price,
+            'quantity': qty,
+            'line_total': line_total,
+            'image': imgs[0] if imgs else '',
+            'stock': product['stock']
+        })
+        subtotal += line_total
+
+    subtotal = round(subtotal, 2)
+
+    if city and city.strip().lower() == 'karachi':
+        shipping = 0
+    else:
+        shipping = SHIPPING_FEE if items else 0
+
+    total = round(max(subtotal + shipping, 0), 2)
+
+    return {
+        'cart_items': items,
+        'item_count': len(items),
+        'subtotal': subtotal,
+        'shipping': shipping,
+        'total': total
+    }
+
 # ==================== CLEANUP ====================
 
 def close_all_connections():

@@ -29,7 +29,9 @@ from db_config import (
     has_customer_used_referral_code,
 
     init_reservations_table, create_reservation, get_active_reservation,
-    release_reservation, get_reserved_product_ids, cleanup_expired_reservations
+    release_reservation, get_reserved_product_ids, cleanup_expired_reservations,
+
+    calculate_totals, SHIPPING_FEE
 )
 
 cloudinary.config(
@@ -533,6 +535,186 @@ def page_not_found(e):
 @app.errorhandler(500)
 def internal_error(e):
     return render_template('500.html'), 500
+
+
+# ==================== CART ====================
+
+@app.route('/cart')
+def view_cart():
+    cart = session.get('cart', [])
+    summary = calculate_totals(cart)
+    return render_template('cart.html', summary=summary)
+
+@app.route('/add-to-cart', methods=['POST'])
+def add_to_cart():
+    data = request.get_json(silent=True) or {}
+    product_id = data.get('product_id', '').strip()
+    quantity = int(data.get('quantity', 1))
+
+    if not product_id:
+        return jsonify({'success': False, 'message': 'No product specified.'})
+
+    product = get_product_by_id_db(product_id)
+    if not product:
+        return jsonify({'success': False, 'message': 'Product not found.'})
+
+    if product.get('stock', 0) <= 0:
+        return jsonify({'success': False, 'message': 'Product is out of stock.'})
+
+    cart = session.get('cart', [])
+
+    for item in cart:
+        if item['product_id'] == product_id:
+            new_qty = min(item['quantity'] + quantity, product['stock'])
+            item['quantity'] = new_qty
+            session['cart'] = cart
+            summary = calculate_totals(cart)
+            return jsonify({'success': True, 'message': 'Cart updated.', 'cart_summary': summary})
+
+    qty = min(quantity, product['stock'])
+    cart.append({'product_id': product_id, 'quantity': qty})
+    session['cart'] = cart
+    summary = calculate_totals(cart)
+    return jsonify({'success': True, 'message': 'Added to cart.', 'cart_summary': summary})
+
+@app.route('/update-cart', methods=['POST'])
+def update_cart():
+    data = request.get_json(silent=True) or {}
+    product_id = data.get('product_id', '').strip()
+    quantity = int(data.get('quantity', 1))
+
+    if not product_id:
+        return jsonify({'success': False, 'message': 'No product specified.'})
+
+    cart = session.get('cart', [])
+
+    if quantity <= 0:
+        cart = [item for item in cart if item['product_id'] != product_id]
+    else:
+        product = get_product_by_id_db(product_id)
+        max_qty = product['stock'] if product else quantity
+        for item in cart:
+            if item['product_id'] == product_id:
+                item['quantity'] = min(quantity, max_qty)
+                break
+
+    session['cart'] = cart
+    summary = calculate_totals(cart)
+    return jsonify({'success': True, 'message': 'Cart updated.', 'cart_summary': summary})
+
+@app.route('/remove-from-cart', methods=['POST'])
+def remove_from_cart():
+    data = request.get_json(silent=True) or {}
+    product_id = data.get('product_id', '').strip()
+
+    cart = session.get('cart', [])
+    cart = [item for item in cart if item['product_id'] != product_id]
+    session['cart'] = cart
+    summary = calculate_totals(cart)
+    return jsonify({'success': True, 'message': 'Removed from cart.', 'cart_summary': summary})
+
+@app.route('/get-cart-summary')
+def get_cart_summary():
+    cart = session.get('cart', [])
+    city = request.args.get('city', '').strip()
+    summary = calculate_totals(cart, city=city if city else None)
+    return jsonify(summary)
+
+@app.route('/clear-cart', methods=['POST'])
+def clear_cart():
+    session.pop('cart', None)
+    return jsonify({'success': True, 'message': 'Cart cleared.'})
+
+@app.route('/checkout-cart', methods=['GET', 'POST'])
+def checkout_cart():
+    cart = session.get('cart', [])
+    if not cart:
+        flash('Your cart is empty.', 'error')
+        return redirect(url_for('home'))
+
+    summary = calculate_totals(cart)
+
+    if request.method == 'POST':
+        if not validate_csrf():
+            flash('Session expired. Please try again.', 'error')
+            return render_template('cart_checkout.html', summary=summary)
+
+        customer_name = request.form.get('customer_name', '').strip()
+        whatsapp = request.form.get('whatsapp', '').strip()
+        address = request.form.get('address', '').strip()
+        city = request.form.get('city', '').strip()
+        notes = request.form.get('notes', '').strip()
+        referral_code_input = request.form.get('referral_code', '').strip()
+
+        if not all([customer_name, whatsapp, address, city]):
+            flash('Please fill in all required fields.', 'error')
+            return render_template('cart_checkout.html', summary=summary)
+
+        fresh_summary = calculate_totals(cart, city=city)
+        if not fresh_summary['cart_items']:
+            flash('Your cart is empty or items are out of stock.', 'error')
+            return redirect(url_for('view_cart'))
+
+        discount = 0
+        applied_referral = None
+
+        if referral_code_input:
+            if validate_referral_code(referral_code_input):
+                try:
+                    if has_customer_used_referral_code(whatsapp, referral_code_input):
+                        flash('This coupon has already been used by this phone number.', 'error')
+                        return render_template('cart_checkout.html', summary=fresh_summary)
+                except Exception as e:
+                    print(f"[ERROR] Referral usage check failed: {e}")
+                    flash('Could not verify coupon. Please try again.', 'error')
+                    return render_template('cart_checkout.html', summary=fresh_summary)
+                discount = 200
+                applied_referral = referral_code_input.upper()
+            else:
+                flash('Invalid or inactive coupon code. No discount applied.', 'error')
+                return render_template('cart_checkout.html', summary=fresh_summary)
+
+        order_ids = []
+        for item in fresh_summary['cart_items']:
+            product = get_product_by_id_db(item['product_id'])
+            if not product or product.get('stock', 0) < item['quantity']:
+                flash(f'"{item["name"]}" is no longer available in requested quantity.', 'error')
+                return render_template('cart_checkout.html', summary=fresh_summary)
+
+            item_discount = discount // len(fresh_summary['cart_items']) if discount else 0
+            item_total = max(item['line_total'] - item_discount, 0)
+            if item == fresh_summary['cart_items'][-1]:
+                item_total += discount - (item_discount * (len(fresh_summary['cart_items']) - 1))
+
+            product_identifier = f"{product['id']} - {product['title']}"
+
+            order_id = create_order(
+                customer_name=customer_name,
+                phone_number=whatsapp,
+                delivery_address=address,
+                city=city,
+                product_id_or_name=product_identifier,
+                quantity=item['quantity'],
+                total_price=round(item_total, 2),
+                notes=notes,
+                referral_code=applied_referral,
+                product_description=product.get('description')
+            )
+
+            if order_id:
+                reduce_stock_db(product['id'], item['quantity'])
+                order_ids.append(order_id)
+
+        session.pop('cart', None)
+
+        if order_ids:
+            flash(f'{len(order_ids)} order(s) placed successfully! Total: Rs {fresh_summary["total"]}', 'success')
+            return redirect(url_for('order_confirmation', order_id=order_ids[0]))
+        else:
+            flash('Failed to place orders. Please try again.', 'error')
+            return render_template('cart_checkout.html', summary=fresh_summary)
+
+    return render_template('cart_checkout.html', summary=summary)
 
 
 # ==================== RUN APPLICATION ====================

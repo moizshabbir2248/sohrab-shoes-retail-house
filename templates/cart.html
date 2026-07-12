@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Shopping Cart</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        surface: '#0f0f0f',
+                        card: '#1a1a1a',
+                        border: '#2a2a2a',
+                        muted: '#a0a0a0',
+                        accent: '#f59e0b',
+                    },
+                    fontFamily: { sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'] },
+                }
+            }
+        }
+    </script>
+    <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');</style>
+</head>
+<body class="bg-surface text-white font-sans antialiased pb-40">
+
+    <!-- Header -->
+    <header class="fixed top-0 left-0 right-0 z-40 bg-surface/95 backdrop-blur-md border-b border-border px-4 py-3 flex items-center gap-4">
+        <a href="/" class="text-xl text-white hover:opacity-70 transition-opacity">&larr;</a>
+        <h1 class="text-sm font-semibold tracking-wider uppercase">Your Cart</h1>
+        <span id="cart-count-badge" class="ml-auto text-[11px] text-muted">{{ summary.item_count }} item{{ 's' if summary.item_count != 1 else '' }}</span>
+    </header>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="mt-[57px] px-4 space-y-2">
+            {% for category, message in messages %}
+            <div class="px-4 py-3 rounded text-sm {% if category == 'success' %}bg-emerald-900/40 border border-emerald-700 text-emerald-300{% else %}bg-red-900/40 border border-red-700 text-red-300{% endif %}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Main -->
+    <div class="mt-[57px] px-4 pt-6 max-w-lg mx-auto">
+
+        {% if summary.cart_items %}
+        <!-- Cart Items -->
+        <div id="cart-items" class="space-y-3 mb-4">
+            {% for item in summary.cart_items %}
+            <div class="bg-card border border-border rounded-lg p-4 flex gap-4" data-product-id="{{ item.product_id }}">
+                <div class="w-16 h-16 bg-black rounded-lg flex items-center justify-center flex-shrink-0 border border-border overflow-hidden">
+                    {% if item.image %}
+                    <img src="{{ item.image }}" alt="{{ item.name }}" class="w-full h-full object-cover">
+                    {% else %}
+                    <span class="text-2xl">📦</span>
+                    {% endif %}
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-sm font-semibold text-white truncate">{{ item.name }}</h3>
+                    <p class="text-xs text-muted mt-0.5">Rs {{ item.price|int }} each</p>
+                    <div class="flex items-center gap-3 mt-2">
+                        <button onclick="updateQty('{{ item.product_id }}', {{ item.quantity - 1 }})" class="w-7 h-7 rounded bg-surface border border-border text-white text-sm flex items-center justify-center hover:border-accent transition-colors">-</button>
+                        <span class="text-sm font-medium text-white min-w-[20px] text-center" id="qty-{{ item.product_id }}">{{ item.quantity }}</span>
+                        <button onclick="updateQty('{{ item.product_id }}', {{ item.quantity + 1 }})" class="w-7 h-7 rounded bg-surface border border-border text-white text-sm flex items-center justify-center hover:border-accent transition-colors">+</button>
+                    </div>
+                </div>
+                <div class="flex flex-col items-end justify-between flex-shrink-0">
+                    <p class="text-sm font-bold text-white">Rs {{ item.line_total|int }}</p>
+                    <button onclick="removeItem('{{ item.product_id }}')" class="text-[10px] text-red-400 hover:text-red-300 transition-colors uppercase tracking-wider">Remove</button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- City Input for Shipping -->
+        <div class="bg-card border border-border rounded-lg p-4 mb-4">
+            <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Delivery City</label>
+            <input type="text" id="cart-city" placeholder="Enter your city" class="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white placeholder-muted/40 outline-none focus:border-accent transition-colors">
+            <p class="text-[11px] text-muted/60 mt-1">Free delivery in Karachi &middot; Rs 500 shipping outside Karachi</p>
+        </div>
+
+        <!-- Summary -->
+        <div class="bg-card border border-border rounded-lg p-4 mb-4">
+            <div class="text-[10px] tracking-wider uppercase text-muted mb-3">Order Summary</div>
+            <div class="space-y-2">
+                <div class="flex justify-between text-sm">
+                    <span class="text-muted">Subtotal ({{ summary.item_count }} item{{ 's' if summary.item_count != 1 else '' }})</span>
+                    <span id="cart-subtotal" class="text-white">Rs {{ summary.subtotal|int }}</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-muted">Shipping</span>
+                    <span id="cart-shipping" class="text-muted">Calculating...</span>
+                </div>
+                <div class="border-t border-border pt-2 flex justify-between">
+                    <span class="text-xs font-semibold text-white">Total</span>
+                    <span id="cart-total" class="text-sm font-bold text-white">Rs {{ summary.total|int }}</span>
+                </div>
+            </div>
+        </div>
+
+        {% else %}
+        <!-- Empty Cart -->
+        <div id="empty-cart" class="text-center py-16">
+            <div class="text-4xl mb-4">🛒</div>
+            <h2 class="text-lg font-semibold text-white mb-2">Your cart is empty</h2>
+            <p class="text-sm text-muted mb-6">Browse products and add something you like!</p>
+            <a href="/" class="inline-block bg-white text-black text-xs font-bold tracking-[2px] uppercase px-8 py-3 rounded-lg hover:bg-neutral-200 transition-all">Shop Now</a>
+        </div>
+        {% endif %}
+
+    </div>
+
+    {% if summary.cart_items %}
+    <!-- Sticky Checkout CTA -->
+    <div class="fixed bottom-0 left-0 right-0 z-40" style="padding-bottom: env(safe-area-inset-bottom, 0px);">
+        <div class="bg-gradient-to-t from-surface via-surface/98 to-transparent pt-6 pb-3 px-4">
+            <a href="/checkout-cart" class="group relative flex items-center justify-between w-full bg-white text-black rounded-2xl px-5 py-4 shadow-[0_0_30px_rgba(255,255,255,0.15)] hover:shadow-[0_0_40px_rgba(255,255,255,0.25)] active:scale-[0.98] transition-all duration-200">
+                <div class="flex flex-col items-start">
+                    <span class="text-[10px] font-bold tracking-[3px] uppercase text-gray-500">Proceed to Checkout</span>
+                    <span class="text-[10px] text-gray-400 mt-0.5">{{ summary.item_count }} item{{ 's' if summary.item_count != 1 else '' }} &middot; Pay on Delivery</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span id="cart-total-bottom" class="text-lg font-extrabold text-black">Rs {{ summary.total|int }}</span>
+                    <svg class="w-5 h-5 text-black group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                </div>
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    <script>
+        function updateQty(productId, newQty) {
+            fetch('/update-cart', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ product_id: productId, quantity: newQty })
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.success) location.reload();
+            });
+        }
+
+        function removeItem(productId) {
+            fetch('/remove-from-cart', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ product_id: productId })
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.success) location.reload();
+            });
+        }
+
+        (function() {
+            var cityInput = document.getElementById('cart-city');
+            if (!cityInput) return;
+
+            cityInput.addEventListener('input', function() {
+                var city = cityInput.value.trim();
+                var url = '/get-cart-summary' + (city ? '?city=' + encodeURIComponent(city) : '');
+
+                fetch(url)
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    var shippingEl = document.getElementById('cart-shipping');
+                    var totalEl = document.getElementById('cart-total');
+                    var totalBottom = document.getElementById('cart-total-bottom');
+                    var subtotalEl = document.getElementById('cart-subtotal');
+
+                    if (subtotalEl) subtotalEl.textContent = 'Rs ' + data.subtotal.toLocaleString();
+
+                    if (!city) {
+                        shippingEl.textContent = 'Enter city';
+                        shippingEl.className = 'text-[11px] text-muted';
+                    } else if (data.shipping === 0) {
+                        shippingEl.textContent = 'Free';
+                        shippingEl.className = 'text-[11px] text-emerald-400 font-semibold';
+                    } else {
+                        shippingEl.textContent = 'Rs ' + data.shipping.toLocaleString();
+                        shippingEl.className = 'text-[11px] text-amber-400 font-semibold';
+                    }
+
+                    if (totalEl) totalEl.textContent = 'Rs ' + data.total.toLocaleString();
+                    if (totalBottom) totalBottom.textContent = 'Rs ' + data.total.toLocaleString();
+                });
+            });
+        })();
+    </script>
+
+</body>
+</html>
