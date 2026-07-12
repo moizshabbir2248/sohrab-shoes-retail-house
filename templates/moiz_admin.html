@@ -86,7 +86,15 @@
                         {% for order in orders %}
                         <tr class="border-b border-border hover:bg-card/50 transition-colors">
                             <td class="p-3 text-sm font-semibold">#{{ order.id }}</td>
-                            <td class="p-3 text-sm">{{ order.product_id_or_name }}</td>
+                            <td class="p-3">
+                                <div class="max-w-[180px]">
+                                    <p class="text-sm font-semibold truncate">{{ order.product_title or order.product_id_or_name }}</p>
+                                    {% if order.product_description %}
+                                    <p class="text-[10px] text-muted truncate mt-0.5">{{ order.product_description }}</p>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="p-3 text-sm">{{ order.customer_name }}</td>
                             <td class="p-3 text-sm">{{ order.customer_name }}</td>
                             <td class="p-3 text-sm">{{ order.phone_number }}</td>
                             <td class="p-3 text-sm max-w-[150px] truncate">{{ order.delivery_address }}</td>
@@ -99,6 +107,7 @@
                                 <div class="flex gap-2 flex-wrap">
                                     <a href="https://wa.me/92{{ order.phone_number.lstrip('0') }}?text=Hi%20{{ order.customer_name }}!%20Your%20order%20%23{{ order.id }}%20is%20confirmed.%20We'll%20deliver%20to%20{{ order.delivery_address }}%2C%20{{ order.city }}" target="_blank" class="inline-block px-3 py-1.5 text-[10px] font-bold tracking-wider uppercase rounded bg-[#25D366] text-black hover:opacity-80 transition-opacity">Chat</a>
                                     <form method="POST" class="inline" onsubmit="return confirm('Mark order #{{ order.id }} as complete?');">
+                                        <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
                                         <input type="hidden" name="action" value="mark_complete">
                                         <input type="hidden" name="order_id" value="{{ order.id }}">
                                         <button type="submit" class="inline-block px-3 py-1.5 text-[10px] font-bold tracking-wider uppercase rounded bg-emerald-600 text-white hover:bg-emerald-500 transition-colors">Complete</button>
@@ -121,7 +130,10 @@
                         </div>
                         <span class="text-xs font-bold text-white">Rs {{ order.total_price|int }}</span>
                     </div>
-                    <p class="text-xs text-white mb-1">{{ order.product_id_or_name }}</p>
+                    <p class="text-xs text-white mb-1">{{ order.product_title or order.product_id_or_name }}</p>
+                    {% if order.product_description %}
+                    <p class="text-[10px] text-muted mb-1 truncate">{{ order.product_description }}</p>
+                    {% endif %}
                     <p class="text-[11px] text-muted mb-1">{{ order.phone_number }} &middot; {{ order.city }}</p>
                     <p class="text-[11px] text-muted mb-1 truncate">{{ order.delivery_address }}</p>
                     <div class="flex items-center gap-2 mb-2 flex-wrap">
@@ -136,6 +148,7 @@
                     <div class="flex gap-2">
                         <a href="https://wa.me/92{{ order.phone_number.lstrip('0') }}?text=Hi%20{{ order.customer_name }}!%20Your%20order%20%23{{ order.id }}%20is%20confirmed." target="_blank" class="flex-1 text-center px-3 py-2 text-[10px] font-bold tracking-wider uppercase rounded bg-[#25D366] text-black">Chat</a>
                         <form method="POST" class="flex-1" onsubmit="return confirm('Mark order #{{ order.id }} as complete?');">
+                            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
                             <input type="hidden" name="action" value="mark_complete">
                             <input type="hidden" name="order_id" value="{{ order.id }}">
                             <button type="submit" class="w-full px-3 py-2 text-[10px] font-bold tracking-wider uppercase rounded bg-emerald-600 text-white">Complete</button>
@@ -176,7 +189,14 @@
                         {% for co in completed_orders %}
                         <tr class="border-b border-border hover:bg-card/50 transition-colors">
                             <td class="p-3 text-sm font-semibold">#{{ co.order_id }}</td>
-                            <td class="p-3 text-sm">{{ co.product_id_or_name }}</td>
+                            <td class="p-3">
+                                <div class="max-w-[180px]">
+                                    <p class="text-sm font-semibold truncate">{{ co.product_title or co.product_id_or_name }}</p>
+                                    {% if co.product_description %}
+                                    <p class="text-[10px] text-muted truncate mt-0.5">{{ co.product_description }}</p>
+                                    {% endif %}
+                                </div>
+                            </td>
                             <td class="p-3 text-sm">{{ co.customer_name }}</td>
                             <td class="p-3 text-sm">{{ co.phone_number }}</td>
                             <td class="p-3 text-sm">{{ co.city }}</td>
@@ -197,7 +217,10 @@
                         <span class="text-xs font-bold text-emerald-300">#{{ co.order_id }}</span>
                         <span class="text-xs font-bold text-white">Rs {{ co.total_price|int }}</span>
                     </div>
-                    <p class="text-xs text-white mb-1">{{ co.product_id_or_name }}</p>
+                    <p class="text-xs text-white mb-1">{{ co.product_title or co.product_id_or_name }}</p>
+                    {% if co.product_description %}
+                    <p class="text-[10px] text-muted mb-1 truncate">{{ co.product_description }}</p>
+                    {% endif %}
                     <p class="text-[11px] text-muted">{{ co.customer_name }} &middot; {{ co.city }}</p>
                     <div class="flex items-center gap-2 mt-1 flex-wrap">
                         {% if co.scheme and co.scheme != 'None' %}
@@ -231,11 +254,9 @@
                             <th class="p-3 font-semibold border-b border-border">ID</th>
                             <th class="p-3 font-semibold border-b border-border">Title</th>
                             <th class="p-3 font-semibold border-b border-border">Category</th>
-                            <th class="p-3 font-semibold border-b border-border">Size</th>
                             <th class="p-3 font-semibold border-b border-border">Price</th>
                             <th class="p-3 font-semibold border-b border-border">Orig. Price</th>
                             <th class="p-3 font-semibold border-b border-border">Code</th>
-                            <th class="p-3 font-semibold border-b border-border">Shipping</th>
                             <th class="p-3 font-semibold border-b border-border">Stock</th>
                             <th class="p-3 font-semibold border-b border-border">Action</th>
                         </tr>
@@ -246,16 +267,15 @@
                             <td class="p-3 text-sm">{{ product.id }}</td>
                             <td class="p-3 text-sm font-semibold">{{ product.title }}</td>
                             <td class="p-3 text-sm">{% if product.category %}<span class="text-[10px] font-bold tracking-wider uppercase bg-blue-900/40 text-blue-300 px-2 py-0.5 rounded">{{ product.category }}</span>{% else %}<span class="text-muted/50">-</span>{% endif %}</td>
-                            <td class="p-3 text-sm">{{ product.size }}</td>
                             <td class="p-3 text-sm">PKR {{ product.price }}</td>
                             <td class="p-3 text-sm text-muted">{% if product.original_price %}PKR {{ product.original_price }}{% else %}-{% endif %}</td>
                             <td class="p-3 text-sm text-muted">{{ product.code or '-' }}</td>
-                            <td class="p-3 text-sm">{% if 'Free' in product.shipping_rule %}<span class="text-[10px] font-bold tracking-wider uppercase bg-emerald-900/40 text-emerald-300 px-2 py-0.5 rounded">Free</span>{% else %}<span class="text-[10px] font-bold tracking-wider uppercase bg-yellow-900/40 text-yellow-300 px-2 py-0.5 rounded">Paid</span>{% endif %}</td>
                             <td class="p-3 text-sm">{% if product.stock == 0 %}<span class="text-[10px] font-bold tracking-wider uppercase bg-red-900/40 text-red-300 px-2 py-0.5 rounded">Sold Out</span>{% else %}{{ product.stock }}{% endif %}</td>
                             <td class="p-3">
                                 <div class="flex gap-1.5">
-                                    <button class="px-2.5 py-1.5 text-[10px] font-bold tracking-wider uppercase rounded bg-amber-600 text-white hover:bg-amber-500 transition-colors" onclick="openEditModal('{{ product.id }}','{{ product.title }}','{{ product.size }}',{{ product.price }},{{ product.original_price or 0 }},'{{ product.code or '' }}',{{ product.condition_rating or 9.0 }},{{ product.stock }},'{{ product.category or '' }}')">Edit</button>
+                                    <button class="px-2.5 py-1.5 text-[10px] font-bold tracking-wider uppercase rounded bg-amber-600 text-white hover:bg-amber-500 transition-colors" onclick="openEditModal('{{ product.id }}','{{ product.title }}',{{ product.price }},{{ product.original_price or 0 }},'{{ product.code or '' }}',{{ product.condition_rating or 9.0 }},{{ product.stock }},'{{ product.category or '' }}','{{ (product.description or '') | replace("'", "\\'") }}')">Edit</button>
                                     <form method="POST" class="inline" onsubmit="return confirm('Delete product {{ product.id }} - {{ product.title }}?');">
+                                        <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
                                         <input type="hidden" name="action" value="delete_product">
                                         <input type="hidden" name="product_id" value="{{ product.id }}">
                                         <button type="submit" class="px-2.5 py-1.5 text-[10px] font-bold tracking-wider uppercase rounded bg-red-700 text-white hover:bg-red-600 transition-colors">Del</button>
@@ -275,16 +295,16 @@
                         <p class="text-xs font-semibold text-white">{{ product.title }}</p>
                         <span class="text-xs font-bold text-white">PKR {{ product.price }}</span>
                     </div>
-                    <p class="text-[11px] text-muted mb-1">ID: {{ product.id }} &middot; Size: {{ product.size }} &middot; Stock: {{ product.stock }}</p>
+                    <p class="text-[11px] text-muted mb-1">ID: {{ product.id }} &middot; Stock: {{ product.stock }}</p>
                     <div class="flex items-center gap-2 mb-2 flex-wrap">
                         {% if product.category %}<span class="text-[9px] font-bold tracking-wider uppercase bg-blue-900/40 text-blue-300 px-1.5 py-0.5 rounded">{{ product.category }}</span>{% endif %}
                         {% if product.original_price %}<span class="text-[10px] text-muted line-through">PKR {{ product.original_price }}</span>{% endif %}
-                        {% if 'Free' in product.shipping_rule %}<span class="text-[9px] font-bold tracking-wider uppercase bg-emerald-900/40 text-emerald-300 px-1.5 py-0.5 rounded">Free Ship</span>{% endif %}
                         {% if product.stock == 0 %}<span class="text-[9px] font-bold tracking-wider uppercase bg-red-900/40 text-red-300 px-1.5 py-0.5 rounded">Sold Out</span>{% endif %}
                     </div>
                     <div class="flex gap-2">
-                        <button class="flex-1 px-3 py-2 text-[10px] font-bold tracking-wider uppercase rounded bg-amber-600 text-white" onclick="openEditModal('{{ product.id }}','{{ product.title }}','{{ product.size }}',{{ product.price }},{{ product.original_price or 0 }},'{{ product.code or '' }}',{{ product.condition_rating or 9.0 }},{{ product.stock }},'{{ product.category or '' }}')">Edit</button>
+                        <button class="flex-1 px-3 py-2 text-[10px] font-bold tracking-wider uppercase rounded bg-amber-600 text-white" onclick="openEditModal('{{ product.id }}','{{ product.title }}',{{ product.price }},{{ product.original_price or 0 }},'{{ product.code or '' }}',{{ product.condition_rating or 9.0 }},{{ product.stock }},'{{ product.category or '' }}','{{ (product.description or '') | replace("'", "\\'") }}')">Edit</button>
                         <form method="POST" class="flex-1" onsubmit="return confirm('Delete {{ product.title }}?');">
+                            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
                             <input type="hidden" name="action" value="delete_product">
                             <input type="hidden" name="product_id" value="{{ product.id }}">
                             <button type="submit" class="w-full px-3 py-2 text-[10px] font-bold tracking-wider uppercase rounded bg-red-700 text-white">Delete</button>
@@ -305,6 +325,7 @@
             </div>
 
             <form method="POST" enctype="multipart/form-data" class="max-w-2xl space-y-4 md:space-y-6">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
                 <input type="hidden" name="action" value="add_product">
 
                 <!-- Basic Info -->
@@ -331,10 +352,6 @@
                                 <option value="Jewelry">Jewelry</option>
                                 <option value="Chappal">Chappal</option>
                             </select>
-                        </div>
-                        <div>
-                            <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Size *</label>
-                            <input type="text" name="size" required placeholder="e.g., 42" class="w-full bg-surface border border-border rounded-lg px-3 md:px-4 py-2.5 md:py-3 text-sm text-white placeholder-muted/40 outline-none focus:border-white transition-colors">
                         </div>
                         <div>
                             <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Location Code</label>
@@ -367,6 +384,17 @@
                             </div>
                         </div>
                         <div id="file-preview" class="hidden mt-3 flex flex-wrap gap-2"></div>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div class="bg-card border border-border rounded-xl p-4 md:p-5 space-y-4">
+                    <div class="flex items-center gap-2 pb-3 border-b border-border">
+                        <h3 class="text-xs md:text-sm font-semibold tracking-wider">Product Description</h3>
+                    </div>
+                    <div>
+                        <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Description <span class="text-muted/60 font-normal normal-case tracking-normal">(Detailed product information)</span></label>
+                        <textarea name="description" rows="4" placeholder="Write detailed information about the product..." class="w-full bg-surface border border-border rounded-lg px-3 md:px-4 py-2.5 md:py-3 text-sm text-white placeholder-muted/40 outline-none focus:border-white transition-colors resize-vertical min-h-[100px]">{{ request.form.get('description', '') }}</textarea>
                     </div>
                 </div>
 
@@ -407,6 +435,7 @@
             <div class="bg-card border border-border rounded-xl p-4 md:p-5 mb-4 md:mb-6">
                 <h3 class="text-xs md:text-sm font-semibold tracking-wider mb-3">Add New Code</h3>
                 <form method="POST" class="flex flex-col sm:flex-row gap-3">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="action" value="add_referral_code">
                     <input type="text" name="referral_code" required placeholder="e.g. MOIZ200" class="flex-1 bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white placeholder-muted/40 outline-none focus:border-white transition-colors uppercase tracking-wider">
                     <button type="submit" class="bg-white text-black text-xs font-bold tracking-[2px] uppercase px-6 py-3 rounded-lg hover:bg-neutral-200 transition-all whitespace-nowrap">Add Code</button>
@@ -446,11 +475,13 @@
                                 <td class="px-5 py-3">
                                     <div class="flex gap-2">
                                         <form method="POST" class="inline">
+                                            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
                                             <input type="hidden" name="action" value="toggle_referral_code">
                                             <input type="hidden" name="code_id" value="{{ rc.id }}">
                                             <button type="submit" class="px-3 py-1.5 text-[10px] font-bold tracking-wider uppercase rounded {% if rc.is_active %}bg-amber-600 text-white hover:bg-amber-500{% else %}bg-emerald-600 text-white hover:bg-emerald-500{% endif %} transition-colors">{% if rc.is_active %}Deactivate{% else %}Activate{% endif %}</button>
                                         </form>
                                         <form method="POST" class="inline" onsubmit="return confirm('Delete code {{ rc.code }}?');">
+                                            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
                                             <input type="hidden" name="action" value="delete_referral_code">
                                             <input type="hidden" name="code_id" value="{{ rc.id }}">
                                             <button type="submit" class="px-3 py-1.5 text-[10px] font-bold tracking-wider uppercase rounded bg-red-700 text-white hover:bg-red-600 transition-colors">Delete</button>
@@ -477,11 +508,13 @@
                         <p class="text-[10px] text-muted mb-2">{{ format_datetime(rc.created_at) }}</p>
                         <div class="flex gap-2">
                             <form method="POST" class="flex-1">
+                                <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
                                 <input type="hidden" name="action" value="toggle_referral_code">
                                 <input type="hidden" name="code_id" value="{{ rc.id }}">
                                 <button type="submit" class="w-full px-3 py-2 text-[10px] font-bold tracking-wider uppercase rounded {% if rc.is_active %}bg-amber-600 text-white{% else %}bg-emerald-600 text-white{% endif %}">{% if rc.is_active %}Deactivate{% else %}Activate{% endif %}</button>
                             </form>
                             <form method="POST" class="flex-1" onsubmit="return confirm('Delete {{ rc.code }}?');">
+                                <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
                                 <input type="hidden" name="action" value="delete_referral_code">
                                 <input type="hidden" name="code_id" value="{{ rc.id }}">
                                 <button type="submit" class="w-full px-3 py-2 text-[10px] font-bold tracking-wider uppercase rounded bg-red-700 text-white">Delete</button>
@@ -506,16 +539,13 @@
                 <button onclick="closeEditModal()" class="text-muted hover:text-white text-xl leading-none">&times;</button>
             </div>
             <form method="POST" enctype="multipart/form-data" class="p-4 md:p-5 space-y-4">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
                 <input type="hidden" name="action" value="edit_product">
                 <input type="hidden" name="product_id" id="edit_product_id">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
                     <div>
                         <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Title *</label>
                         <input type="text" id="edit_title" name="title" required class="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white outline-none focus:border-white">
-                    </div>
-                    <div>
-                        <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Size *</label>
-                        <input type="text" id="edit_size" name="size" required class="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white outline-none focus:border-white">
                     </div>
                     <div>
                         <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Category</label>
@@ -552,6 +582,10 @@
                 <div>
                     <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Replace Images <span class="text-muted/60 font-normal normal-case tracking-normal">(Optional, up to 5)</span></label>
                     <input type="file" name="image_files" accept="image/*" multiple class="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-bold file:bg-white file:text-black hover:file:bg-neutral-200 file:cursor-pointer">
+                </div>
+                <div>
+                    <label class="text-[11px] font-medium text-muted tracking-wider uppercase block mb-1.5">Description</label>
+                    <textarea id="edit_description" name="description" rows="3" placeholder="Detailed product information..." class="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-white placeholder-muted/40 outline-none focus:border-white resize-vertical min-h-[80px]"></textarea>
                 </div>
                 <button type="submit" class="w-full bg-white text-black text-xs font-bold tracking-[2px] uppercase py-4 rounded-lg hover:bg-neutral-200 transition-all">Update Product</button>
             </form>
@@ -595,16 +629,16 @@
             event.currentTarget.classList.remove('text-muted', 'border-transparent');
             event.currentTarget.classList.add('text-white', 'border-white');
         }
-        function openEditModal(id, title, size, price, originalPrice, code, conditionRating, stock, category) {
+        function openEditModal(id, title, price, originalPrice, code, conditionRating, stock, category, description) {
             document.getElementById('edit_product_id').value = id;
             document.getElementById('edit_title').value = title;
-            document.getElementById('edit_size').value = size;
             document.getElementById('edit_price').value = price;
             document.getElementById('edit_original_price').value = originalPrice || '';
             document.getElementById('edit_code').value = code;
             document.getElementById('edit_condition_rating').value = conditionRating;
             document.getElementById('edit_stock').value = stock;
             document.getElementById('edit_category').value = category || '';
+            document.getElementById('edit_description').value = description || '';
             document.getElementById('editModal').classList.remove('hidden');
             document.getElementById('editModal').classList.add('flex');
         }

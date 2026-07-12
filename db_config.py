@@ -1,11 +1,11 @@
 import os
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import psycopg2
 from psycopg2 import pool
 
-load_dotenv()
+load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env'))
 
 NEON_DB_URL = os.getenv('NEON_DB_URL')
 
@@ -159,6 +159,183 @@ def toggle_referral_code(code_id):
         if conn:
             conn.rollback()
         return False
+    finally:
+        if conn:
+            release_connection(conn)
+
+def has_customer_used_referral_code(phone_number, referral_code):
+    conn = None
+    try:
+        conn = get_neon_connection()
+        cursor = conn.cursor()
+        normalized_phone = phone_number.strip()
+        normalized_code = referral_code.strip().upper()
+        cursor.execute(
+            "SELECT id FROM orders WHERE phone_number = %s AND referral_code = %s LIMIT 1",
+            (normalized_phone, normalized_code)
+        )
+        row = cursor.fetchone()
+        if row:
+            cursor.close()
+            return True
+        cursor.execute(
+            "SELECT id FROM completed_orders WHERE phone_number = %s AND referral_code = %s LIMIT 1",
+            (normalized_phone, normalized_code)
+        )
+        row = cursor.fetchone()
+        cursor.close()
+        return True if row else False
+    except Exception as e:
+        print(f"[ERROR] has_customer_used_referral_code: {e}")
+        raise
+    finally:
+        if conn:
+            release_connection(conn)
+
+# ==================== RESERVATIONS TABLE ====================
+
+def init_reservations_table():
+    conn = None
+    try:
+        conn = get_neon_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS reservations (
+                id SERIAL PRIMARY KEY,
+                product_id VARCHAR(50) NOT NULL,
+                session_id VARCHAR(64) NOT NULL,
+                expires_at TIMESTAMP NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_reservations_product ON reservations(product_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_reservations_expires ON reservations(expires_at)")
+        conn.commit()
+        cursor.close()
+        print("[OK] Reservations table created/verified in Neon DB")
+        return True
+    except Exception as e:
+        print(f"[ERROR] Failed to create reservations table: {e}")
+        if conn:
+            conn.rollback()
+        return False
+    finally:
+        if conn:
+            release_connection(conn)
+
+def create_reservation(product_id, session_id, expiry_minutes=10):
+    conn = None
+    try:
+        conn = get_neon_connection()
+        cursor = conn.cursor()
+        expires_at = datetime.utcnow() + timedelta(minutes=expiry_minutes)
+        cursor.execute(
+            "DELETE FROM reservations WHERE product_id = %s AND expires_at < NOW()",
+            (product_id,)
+        )
+        cursor.execute(
+            "SELECT id, session_id FROM reservations WHERE product_id = %s AND expires_at > NOW()",
+            (product_id,)
+        )
+        existing = cursor.fetchone()
+        if existing and existing[1] != session_id:
+            cursor.close()
+            return False, "Product is temporarily reserved by another customer"
+        cursor.execute("""
+            INSERT INTO reservations (product_id, session_id, expires_at)
+            VALUES (%s, %s, %s)
+            ON CONFLICT (product_id) DO UPDATE SET
+                expires_at = EXCLUDED.expires_at,
+                session_id = EXCLUDED.session_id
+        """, (product_id, session_id, expires_at))
+        conn.commit()
+        cursor.close()
+        return True, "Reserved"
+    except Exception as e:
+        print(f"[ERROR] create_reservation: {e}")
+        if conn:
+            conn.rollback()
+        return False, str(e)
+    finally:
+        if conn:
+            release_connection(conn)
+
+def get_active_reservation(product_id):
+    conn = None
+    try:
+        conn = get_neon_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT id, session_id, expires_at FROM reservations WHERE product_id = %s AND expires_at > NOW()",
+            (product_id,)
+        )
+        row = cursor.fetchone()
+        cursor.close()
+        if row:
+            return {'id': row[0], 'session_id': row[1], 'expires_at': row[2]}
+        return None
+    except Exception as e:
+        print(f"[ERROR] get_active_reservation: {e}")
+        return None
+    finally:
+        if conn:
+            release_connection(conn)
+
+def release_reservation(product_id, session_id=None):
+    conn = None
+    try:
+        conn = get_neon_connection()
+        cursor = conn.cursor()
+        if session_id:
+            cursor.execute(
+                "DELETE FROM reservations WHERE product_id = %s AND session_id = %s",
+                (product_id, session_id)
+            )
+        else:
+            cursor.execute("DELETE FROM reservations WHERE product_id = %s", (product_id,))
+        conn.commit()
+        cursor.close()
+        return True
+    except Exception as e:
+        print(f"[ERROR] release_reservation: {e}")
+        if conn:
+            conn.rollback()
+        return False
+    finally:
+        if conn:
+            release_connection(conn)
+
+def get_reserved_product_ids():
+    conn = None
+    try:
+        conn = get_neon_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT product_id FROM reservations WHERE expires_at > NOW()")
+        rows = cursor.fetchall()
+        cursor.close()
+        return {row[0] for row in rows}
+    except Exception as e:
+        print(f"[ERROR] get_reserved_product_ids: {e}")
+        return set()
+    finally:
+        if conn:
+            release_connection(conn)
+
+def cleanup_expired_reservations():
+    conn = None
+    try:
+        conn = get_neon_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM reservations WHERE expires_at < NOW()")
+        deleted = cursor.rowcount
+        conn.commit()
+        cursor.close()
+        return deleted
+    except Exception as e:
+        print(f"[ERROR] cleanup_expired_reservations: {e}")
+        if conn:
+            conn.rollback()
+        return 0
     finally:
         if conn:
             release_connection(conn)
@@ -324,7 +501,7 @@ def update_product_in_db(product_id, data):
                 title = %(title)s, price = %(price)s, size = %(size)s,
                 original_price = %(original_price)s, stock = %(stock)s,
                 code = %(code)s, condition_rating = %(condition_rating)s,
-                category = %(category)s, images = %(images)s
+                category = %(category)s, description = %(description)s, images = %(images)s
             WHERE product_id = %(product_id)s
         """, {**data, 'product_id': product_id})
         conn.commit()
@@ -488,6 +665,7 @@ def init_orders_table():
         """)
         cursor.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS scheme VARCHAR(50) DEFAULT 'None'")
         cursor.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS referral_code VARCHAR(100)")
+        cursor.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS product_description TEXT")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_orders_date ON orders(order_date DESC)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status)")
         conn.commit()
@@ -506,6 +684,13 @@ def init_orders_table():
 def _row_to_order(row):
     if not row:
         return None
+    images_raw = row[16] if len(row) > 16 else None
+    product_images = []
+    if images_raw:
+        try:
+            product_images = json.loads(images_raw)
+        except (json.JSONDecodeError, TypeError):
+            product_images = []
     return {
         'id': row[0],
         'customer_name': row[1],
@@ -519,11 +704,15 @@ def _row_to_order(row):
         'status': row[9],
         'notes': row[10],
         'scheme': row[11] if len(row) > 11 else 'None',
-        'referral_code': row[12] if len(row) > 12 else None
+        'referral_code': row[12] if len(row) > 12 else None,
+        'product_description': row[13] if len(row) > 13 else None,
+        'product_title': row[14] if len(row) > 14 else None,
+        'product_price': float(row[15]) if len(row) > 15 and row[15] else None,
+        'product_images': product_images
     }
 
 def create_order(customer_name, phone_number, delivery_address, city,
-                 product_id_or_name, quantity, total_price, notes=None, scheme='None', referral_code=None):
+                 product_id_or_name, quantity, total_price, notes=None, scheme='None', referral_code=None, product_description=None):
     conn = None
     try:
         conn = get_neon_connection()
@@ -531,11 +720,11 @@ def create_order(customer_name, phone_number, delivery_address, city,
         cursor.execute("""
             INSERT INTO orders
             (customer_name, phone_number, delivery_address, city,
-             product_id_or_name, quantity, total_price, notes, status, order_date, scheme, referral_code)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'pending', %s, %s, %s)
+             product_id_or_name, quantity, total_price, notes, status, order_date, scheme, referral_code, product_description)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'pending', %s, %s, %s, %s)
             RETURNING id
         """, (customer_name, phone_number, delivery_address, city,
-              product_id_or_name, quantity, total_price, notes, datetime.utcnow(), scheme, referral_code))
+              product_id_or_name, quantity, total_price, notes, datetime.utcnow(), scheme, referral_code, product_description))
         order_id = cursor.fetchone()[0]
         conn.commit()
         cursor.close()
@@ -558,7 +747,7 @@ def get_order_by_id(order_id):
         cursor.execute("""
             SELECT id, customer_name, phone_number, delivery_address, city,
                    product_id_or_name, quantity, total_price, order_date,
-                   status, notes, scheme, referral_code
+                   status, notes, scheme, referral_code, product_description
             FROM orders WHERE id = %s
         """, (order_id,))
         row = cursor.fetchone()
@@ -578,17 +767,23 @@ def get_all_orders(status=None):
         cursor = conn.cursor()
         if status:
             cursor.execute("""
-                SELECT id, customer_name, phone_number, delivery_address, city,
-                       product_id_or_name, quantity, total_price, order_date,
-                       status, notes, scheme, referral_code
-                FROM orders WHERE status = %s ORDER BY order_date DESC
+                SELECT o.id, o.customer_name, o.phone_number, o.delivery_address, o.city,
+                       o.product_id_or_name, o.quantity, o.total_price, o.order_date,
+                       o.status, o.notes, o.scheme, o.referral_code, o.product_description,
+                       p.title AS product_title, p.price AS product_price, p.images AS product_images
+                FROM orders o
+                LEFT JOIN products p ON SPLIT_PART(o.product_id_or_name, ' - ', 1) = p.product_id
+                WHERE o.status = %s ORDER BY o.order_date DESC
             """, (status,))
         else:
             cursor.execute("""
-                SELECT id, customer_name, phone_number, delivery_address, city,
-                       product_id_or_name, quantity, total_price, order_date,
-                       status, notes, scheme, referral_code
-                FROM orders ORDER BY order_date DESC
+                SELECT o.id, o.customer_name, o.phone_number, o.delivery_address, o.city,
+                       o.product_id_or_name, o.quantity, o.total_price, o.order_date,
+                       o.status, o.notes, o.scheme, o.referral_code, o.product_description,
+                       p.title AS product_title, p.price AS product_price, p.images AS product_images
+                FROM orders o
+                LEFT JOIN products p ON SPLIT_PART(o.product_id_or_name, ' - ', 1) = p.product_id
+                ORDER BY o.order_date DESC
             """)
         rows = cursor.fetchall()
         cursor.close()
@@ -645,6 +840,7 @@ def init_completed_orders_table():
         """)
         cursor.execute("ALTER TABLE completed_orders ADD COLUMN IF NOT EXISTS scheme VARCHAR(50) DEFAULT 'None'")
         cursor.execute("ALTER TABLE completed_orders ADD COLUMN IF NOT EXISTS referral_code VARCHAR(100)")
+        cursor.execute("ALTER TABLE completed_orders ADD COLUMN IF NOT EXISTS product_description TEXT")
         conn.commit()
         cursor.close()
         print("[OK] Completed orders table created/verified in Neon DB")
@@ -665,7 +861,8 @@ def mark_order_complete(order_id):
         cursor = conn.cursor()
         cursor.execute("""
             SELECT id, customer_name, phone_number, delivery_address, city,
-                   product_id_or_name, quantity, total_price, order_date, notes, scheme, referral_code
+                   product_id_or_name, quantity, total_price, order_date, notes, scheme, referral_code,
+                   product_description
             FROM orders WHERE id = %s
         """, (order_id,))
         order = cursor.fetchone()
@@ -675,8 +872,9 @@ def mark_order_complete(order_id):
         cursor.execute("""
             INSERT INTO completed_orders
             (order_id, customer_name, phone_number, delivery_address, city,
-             product_id_or_name, quantity, total_price, order_date, notes, scheme, referral_code)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+             product_id_or_name, quantity, total_price, order_date, notes, scheme, referral_code,
+             product_description)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, order)
         cursor.execute("DELETE FROM orders WHERE id = %s", (order_id,))
         conn.commit()
@@ -698,15 +896,25 @@ def get_completed_orders():
         conn = get_neon_connection()
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT id, order_id, customer_name, phone_number, delivery_address,
-                   city, product_id_or_name, quantity, total_price, order_date,
-                   completed_at, notes, scheme, referral_code
-            FROM completed_orders ORDER BY completed_at DESC
+            SELECT co.id, co.order_id, co.customer_name, co.phone_number, co.delivery_address,
+                   co.city, co.product_id_or_name, co.quantity, co.total_price, co.order_date,
+                   co.completed_at, co.notes, co.scheme, co.referral_code, co.product_description,
+                   p.title AS product_title, p.images AS product_images
+            FROM completed_orders co
+            LEFT JOIN products p ON SPLIT_PART(co.product_id_or_name, ' - ', 1) = p.product_id
+            ORDER BY co.completed_at DESC
         """)
         rows = cursor.fetchall()
         cursor.close()
         result = []
         for r in rows:
+            images_raw = r[16] if len(r) > 16 else None
+            product_images = []
+            if images_raw:
+                try:
+                    product_images = json.loads(images_raw)
+                except (json.JSONDecodeError, TypeError):
+                    product_images = []
             result.append({
                 'id': r[0],
                 'order_id': r[1],
@@ -721,7 +929,10 @@ def get_completed_orders():
                 'completed_at': r[10],
                 'notes': r[11],
                 'scheme': r[12] if len(r) > 12 else 'None',
-                'referral_code': r[13] if len(r) > 13 else None
+                'referral_code': r[13] if len(r) > 13 else None,
+                'product_description': r[14] if len(r) > 14 else None,
+                'product_title': r[15] if len(r) > 15 else None,
+                'product_images': product_images
             })
         return result
     except Exception as e:

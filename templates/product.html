@@ -37,7 +37,9 @@
                 <img id="main-product-image" src="{{ imgs[0] }}" alt="{{ product.title }}" class="w-full h-full object-cover">
                 {% endif %}
                 <!-- Size Badge -->
+                {% if product.size %}
                 <span class="absolute top-4 left-4 bg-gray-900/80 text-white text-xs font-bold px-3 py-1.5 rounded-md tracking-wider">UK {{ product.size }}</span>
+                {% endif %}
                 {% if product.shipping_rule == 'Free Shipping' or product.shipping_rule == 'Free Delivery' %}
                 <span class="absolute top-4 right-4 bg-emerald-500 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-md tracking-wider">Free Delivery</span>
                 {% endif %}
@@ -80,14 +82,12 @@
 
         <!-- Specs Grid -->
         <div class="grid grid-cols-2 gap-3 mt-6">
+            {% if product.size %}
             <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
                 <div class="text-[10px] tracking-wider uppercase text-gray-400 mb-1">Size</div>
                 <div class="text-base font-bold text-gray-900">UK {{ product.size }}</div>
             </div>
-            <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-                <div class="text-[10px] tracking-wider uppercase text-gray-400 mb-1">Color</div>
-                <div class="text-base font-bold text-gray-900">{{ product.color or 'Multi' }}</div>
-            </div>
+            {% endif %}
             <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
                 <div class="text-[10px] tracking-wider uppercase text-gray-400 mb-1">Code</div>
                 <div class="text-base font-bold text-gray-900">{{ product.code or 'N/A' }}</div>
@@ -141,7 +141,9 @@
                         {% if rel_imgs %}
                         <img src="{{ rel_imgs[0] }}" alt="{{ related.title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">
                         {% endif %}
+                        {% if related.size %}
                         <span class="absolute top-2 left-2 bg-gray-900/80 text-white text-[9px] font-bold px-2 py-0.5 rounded tracking-wider">UK {{ related.size }}</span>
+                        {% endif %}
                         {% if related.shipping_rule == 'Free Shipping' or related.shipping_rule == 'Free Delivery' %}
                         <span class="absolute top-2 right-2 bg-emerald-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded tracking-wider">Free</span>
                         {% endif %}
@@ -159,10 +161,14 @@
 
     <!-- Fixed Bottom Bar -->
     <div class="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 px-4 py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
-        {% if product.stock > 0 %}
-        <a href="/checkout/{{ product.id }}" class="block w-full text-center bg-gray-900 text-white text-xs font-bold tracking-[2px] uppercase py-4 rounded-xl hover:bg-gray-800 transition-all">Order Now &bull; Pay on Delivery</a>
-        {% else %}
+        {% if product.stock < 1 %}
         <div class="block w-full text-center bg-gray-200 text-gray-400 text-xs font-bold tracking-[2px] uppercase py-4 rounded-xl cursor-not-allowed">Sold Out</div>
+        {% elif is_reserved and not is_mine %}
+        <div class="block w-full text-center bg-amber-100 text-amber-700 text-xs font-bold tracking-[2px] uppercase py-4 rounded-xl cursor-not-allowed">Temporarily Reserved</div>
+        {% elif is_reserved and is_mine %}
+        <a href="/checkout/{{ product.id }}" class="block w-full text-center bg-emerald-600 text-white text-xs font-bold tracking-[2px] uppercase py-4 rounded-xl hover:bg-emerald-500 transition-all">Complete Your Order</a>
+        {% else %}
+        <a href="/checkout/{{ product.id }}" class="block w-full text-center bg-gray-900 text-white text-xs font-bold tracking-[2px] uppercase py-4 rounded-xl hover:bg-gray-800 transition-all">Order Now &bull; Pay on Delivery</a>
         {% endif %}
     </div>
 

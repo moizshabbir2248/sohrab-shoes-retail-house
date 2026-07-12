@@ -47,25 +47,12 @@
     <!-- Category Filter -->
     <div class="sticky top-16 sm:top-16 z-40 bg-white border-b border-gray-200 overflow-x-auto">
         <div class="flex gap-2 px-4 py-3 min-w-max max-w-7xl mx-auto">
-            <a href="/{% if request.args.get('size') %}?size={{ request.args.get('size') }}{% endif %}" class="inline-block px-5 py-2 text-xs font-semibold tracking-wider uppercase rounded-full border transition-all {% if not request.args.get('category') %}bg-gray-900 text-white border-gray-900{% else %}bg-white text-gray-500 border-gray-200 hover:border-gray-900 hover:text-gray-900{% endif %}">All</a>
+            <a href="/" class="inline-block px-5 py-2 text-xs font-semibold tracking-wider uppercase rounded-full border transition-all {% if not request.args.get('category') %}bg-gray-900 text-white border-gray-900{% else %}bg-white text-gray-500 border-gray-200 hover:border-gray-900 hover:text-gray-900{% endif %}">All</a>
             {% for cat in all_categories %}
-            <a href="/?category={{ cat }}{% if request.args.get('size') %}&size={{ request.args.get('size') }}{% endif %}" class="inline-block px-5 py-2 text-xs font-semibold tracking-wider uppercase rounded-full border transition-all {% if request.args.get('category') == cat %}bg-gray-900 text-white border-gray-900{% else %}bg-white text-gray-500 border-gray-200 hover:border-gray-900 hover:text-gray-900{% endif %}">{{ cat }}</a>
+            <a href="/?category={{ cat }}" class="inline-block px-5 py-2 text-xs font-semibold tracking-wider uppercase rounded-full border transition-all {% if request.args.get('category') == cat %}bg-gray-900 text-white border-gray-900{% else %}bg-white text-gray-500 border-gray-200 hover:border-gray-900 hover:text-gray-900{% endif %}">{{ cat }}</a>
             {% endfor %}
         </div>
     </div>
-
-    <!-- Size Filter -->
-    {% set active_category = request.args.get('category', '') %}
-    {% if not active_category or active_category in ['Shoes', 'Chappal'] %}
-    <div class="sticky top-[120px] sm:top-[120px] z-30 bg-white border-b border-gray-200 overflow-x-auto">
-        <div class="flex gap-2 px-4 py-3 min-w-max max-w-7xl mx-auto">
-            <a href="/{% if request.args.get('category') %}?category={{ request.args.get('category') }}{% endif %}" class="inline-block px-5 py-2 text-xs font-semibold tracking-wider uppercase rounded-full border transition-all {% if not request.args.get('size') %}bg-gray-900 text-white border-gray-900{% else %}bg-white text-gray-500 border-gray-200 hover:border-gray-900 hover:text-gray-900{% endif %}">All Sizes</a>
-            {% for s in ['40','41','42','43','44','45'] %}
-            <a href="/?size={{ s }}{% if request.args.get('category') %}&category={{ request.args.get('category') }}{% endif %}" class="inline-block px-5 py-2 text-xs font-semibold tracking-wider uppercase rounded-full border transition-all {% if request.args.get('size') == s %}bg-gray-900 text-white border-gray-900{% else %}bg-white text-gray-500 border-gray-200 hover:border-gray-900 hover:text-gray-900{% endif %}">{{ s }}</a>
-            {% endfor %}
-        </div>
-    </div>
-    {% endif %}
 
     <!-- Main Content -->
     <main class="max-w-7xl mx-auto px-4 pt-6">
@@ -85,7 +72,7 @@
         {% if products %}
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
             {% for product in products %}
-            <div class="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 {% if product.stock < 1 %}opacity-60 pointer-events-none{% endif %} overflow-hidden">
+            <div class="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 {% if product.stock < 1 %}opacity-60 pointer-events-none{% elif product.id in reserved_ids %}opacity-75{% endif %} overflow-hidden">
                 <a href="/product/{{ product.id }}">
                     <div class="aspect-square bg-gray-100 relative overflow-hidden">
                         {% if product.images and product.images|length > 0 %}
@@ -96,7 +83,9 @@
                         {% if product.images and product.images|length > 1 %}
                         <span class="absolute top-3 right-3 bg-black/60 text-white text-[10px] font-bold px-2 py-1 rounded-md shadow-sm">{{ product.images|length }} Photos</span>
                         {% endif %}
+                        {% if product.size %}
                         <span class="absolute top-3 left-3 bg-gray-900 text-white text-[11px] font-bold px-2.5 py-1 rounded-md tracking-wider shadow-sm">Size: {{ product.size }}</span>
+                        {% endif %}
                         {% if product.shipping_rule == 'Free Shipping' or product.shipping_rule == 'Free Delivery' %}
                         <span class="absolute top-3 right-3 bg-emerald-500 text-white text-[10px] font-bold px-2 py-1 rounded-md tracking-wider shadow-sm">Free Delivery</span>
                         {% elif product.shipping_rule == 'Pack Offer' %}
@@ -108,6 +97,10 @@
                         {% if product.stock < 1 %}
                         <div class="absolute inset-0 bg-white/60 flex items-center justify-center">
                             <span class="bg-gray-900 text-white text-xs font-bold tracking-widest uppercase px-5 py-2 rounded-lg shadow-md">Sold Out</span>
+                        </div>
+                        {% elif product.id in reserved_ids %}
+                        <div class="absolute inset-0 bg-white/60 flex items-center justify-center">
+                            <span class="bg-amber-500 text-white text-xs font-bold tracking-widest uppercase px-5 py-2 rounded-lg shadow-md">Reserved</span>
                         </div>
                         {% endif %}
                     </div>
@@ -149,7 +142,7 @@
             </div>
             <h2 class="text-lg font-semibold text-gray-900 mb-1">No products found</h2>
             <p class="text-sm text-gray-400">Check back soon for new arrivals</p>
-            {% if request.args.get('category') or request.args.get('size') %}
+            {% if request.args.get('category') %}
             <a href="/" class="inline-block mt-4 text-sm font-semibold text-gray-900 underline underline-offset-4 hover:text-gray-600 transition-colors">Clear Filters</a>
             {% endif %}
         </div>
